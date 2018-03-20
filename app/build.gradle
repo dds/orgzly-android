@@ -76,6 +76,8 @@ android {
          * javax.servlet.http. Referenced from com.dropbox.core.DbxStandardSessionStore.
          */
         disable 'InvalidPackage'
+
+        abortOnError false
     }
 
     compileOptions {
@@ -149,4 +151,16 @@ def orgJavaLocation() {
         logger.info("app: Using com.orgzly:org-java:$org_java_version from Maven repository")
         return "com.orgzly:org-java:$org_java_version"
     }
+}
+
+def loadProperties(file) {
+    Properties properties = new Properties()
+
+    if (file.exists()) {
+        properties.load(file.newDataInputStream())
+    } else {
+        logger.warn("Properties file ${file} does not exist")
+    }
+
+    return properties
 }
