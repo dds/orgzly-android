@@ -7,6 +7,7 @@ import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import com.orgzly.R;
+import com.orgzly.android.ui.views.TextViewWithMarkup;
 
 /**
  *
@@ -22,6 +23,7 @@ public class ViewHolder /* extends RecyclerView.ViewHolder */ {
 
     public ViewGroup indentContainer;
 
+    public ViewGroup bulletContainer;
     public ImageView bullet;
 
     public TextView title;
@@ -36,7 +38,7 @@ public class ViewHolder /* extends RecyclerView.ViewHolder */ {
     public View closed;
     public TextView closedText;
 
-    public TextView content;
+    public TextViewWithMarkup content;
 
     public ViewGroup menuContainer;
     public ViewFlipper menuFlipper;
@@ -57,6 +59,8 @@ public class ViewHolder /* extends RecyclerView.ViewHolder */ {
         bookNameUnderNoteText = itemView.findViewById(R.id.item_head_book_name_text);
 
         indentContainer = itemView.findViewById(R.id.item_head_indent_container);
+
+        bulletContainer = itemView.findViewById(R.id.item_head_bullet_container);
         bullet = itemView.findViewById(R.id.item_head_bullet);
 
         payload = itemView.findViewById(R.id.item_head_payload);

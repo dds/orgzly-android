@@ -15,11 +15,13 @@
     <string name="not_now">Not now</string>
     <string name="save">Save</string>
     <string name="discard">Discard</string>
-    <string name="no_link">No Link</string>
+    <string name="remove_notebook_link">Remove link</string>
     <string name="browse">Browse</string>
     <string name="dropbox">Dropbox</string>
     <string name="edit">Edit</string>
+    <string name="edit_note">Edit note</string>
     <string name="delete">Delete</string>
+    <string name="delete_with_quoted_argument">Delete “%s”</string>
     <string name="name">Name</string>
     <string name="value">Value</string>
     <string name="query">Query</string>
@@ -30,6 +32,7 @@
     <string name="close">Close</string>
     <string name="import_">Import</string> <!-- Reserved keyword -->
     <string name="export">Export</string>
+    <string name="overwrite">Overwrite</string>
     <string name="imported">Imported</string>
     <string name="created">Created</string>
     <string name="states">States</string>
@@ -46,6 +49,9 @@
     <string name="repeater">Repeater</string>
     <string name="state">State</string>
     <string name="priority">Priority</string>
+    <string name="nothing">Nothing</string>
+    <string name="open">Open</string>
+    <string name="widget">Widget</string>
 
     <plurals name="notes_deleted">
         <item quantity="one">Note deleted</item>
@@ -86,6 +92,8 @@
     <string name="drawer_open">Open drawer</string>
 
     <string name="schedule">Schedule</string>
+    <string name="refile">Refile</string>
+    <string name="refile_to">Refile to</string>
     <string name="deadline">Deadline</string>
     <string name="closed">Closed</string>
 
@@ -114,6 +122,7 @@
     <string name="heads_moving_action_menu_item_up">Up</string>
     <string name="heads_moving_action_menu_item_demote">Demote</string>
     <string name="new_note">New note</string>
+    <string name="quick_note">Quick note</string>
     <string name="tap_to_create_new_note">Tap to create a new note</string>
     <string name="options_menu_item_search">Search</string>
 
@@ -161,6 +170,7 @@
     <string name="book_last_action">Notebook last action</string>
     <string name="book_notes_count">Notes count</string>
     <string name="pref_title_notebooks">Notes &amp; Notebooks</string>
+    <string name="notebook">Notebook</string>
     <string name="notebooks">Notebooks</string>
     <string name="searches">Searches</string>
     <string name="search">Search</string>
@@ -180,6 +190,13 @@
 
     <string name="fragment_repo_dropbox_directory_desc">Directory inside Dropbox (e.g. “/Documents/Orgzly”)</string>
     <string name="directory_uri">Directory URI</string>
+
+    <string name="git_url_hint">Remote address (e.g. git@github.com:orgzly/orgzly-android.git)</string>
+    <string name="git_directory_hint">Directory location (e.g. “file:/sdcard/orgzly”)</string>
+    <string name="git_ssh_key_hint">SSH key location (e.g. “file:/sdcard/id_rsa”)</string>
+    <string name="git_author_hint">Author (e.g. John Doe)</string>
+    <string name="git_email_hint">Email (e.g. john@email.com)</string>
+    <string name="git_branch_hint">Branch (e.g. master)</string>
 
     <!-- Share button - error messages (set as title). -->
     <string name="share_action_not_set">Share action not set</string>
@@ -233,9 +250,6 @@
     <string name="renamed_book_from">Renamed from “%s”</string>
 
     <string name="also_delete_linked_book">Delete linked remote notebook</string>
-    <string name="delete_with_quoted_argument">Delete “%s”</string>
-    <string name="delete_also_with_argument">Also delete %s</string>
-    <string name="delete_notebook_question">Delete this notebook?</string>
     <string name="message_deleting_book_failed">Deleting notebook failed: %s</string>
     <string name="message_book_deleted">Notebook deleted</string>
 
@@ -253,7 +267,10 @@
     <string name="use_created_at_property_summary">Sync created-at time using a property</string>
 
     <string name="created_at_property">Created-at property</string>
-    <string name="property_name">Property Name</string>
+
+    <string name="properties">Properties</string>
+    <string name="property_name">Property name</string>
+    <string name="property_value">Property value</string>
 
     <string name="reminder_for_scheduled">Scheduled: %s</string>
     <string name="reminder_for_deadline">Deadline: %s</string>
@@ -371,6 +388,8 @@
     <string name="duplicate_keywords_not_allowed">Keyword %s already used</string>
     <string name="no_states_defined">No states defined</string>
     <string name="book_name_in_search">Notebook name in search results</string>
+
+    <string name="display_notebook_name">Display notebook name</string>
 
     <string name="display_inherited_tags_in_search_results">Inherited tags in search results</string>
     <string name="display_inherited_tags_in_search_results_summary">Display inherited tags in search results</string>
@@ -496,5 +515,23 @@
 
     <string name="notification_channel_settings">Notifications</string>
     <string name="notification_channel_settings_summary">Sound, vibrate, notification dot</string>
+    <string name="hide_note_metadata">Hide metadata</string>
+    <string name="overwrite_local_notebook_question">Overwrite local notebook?</string>
+    <string name="overwrite_remote_notebook_question">Overwrite remote notebook?</string>
+    <string name="drawers_folded_by_default">Drawers folded</string>
+    <string name="drawers_folded_by_default_summary">Fold drawers by default</string>
+    <string name="log_on_time_shift">Log to drawer on time shift</string>
+    <string name="log_on_time_shift_summary">Log time when note with repeater is marked as done</string>
+    <string name="set_last_repeat_on_time_shift">Set property on time shift</string>
+    <string name="set_last_repeat_on_time_shift_summary">Set time when note with repeater is marked as done</string>
+    <string name="background_opacity">Background opacity</string>
+    <string name="update_frequency">Update frequency</string>
+    <string name="git">Git</string>
+    <string name="metadata">Metadata</string>
+    <string name="selected_metadata_summary">Metadata you can choose to always display in note</string>
+    <string name="show_all">Show all</string>
+    <string name="always_show_set">Always show set</string>
+    <string name="show_selected">Show selected</string>
+    <string name="hide_all">Hide all</string>
 
 </resources>

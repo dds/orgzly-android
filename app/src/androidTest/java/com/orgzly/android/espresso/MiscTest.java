@@ -1,6 +1,7 @@
 package com.orgzly.android.espresso;
 
 import android.support.test.InstrumentationRegistry;
+import android.support.test.espresso.matcher.PreferenceMatchers;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.format.DateFormat;
@@ -12,7 +13,7 @@ import com.orgzly.R;
 import com.orgzly.android.NotePosition;
 import com.orgzly.android.OrgzlyTest;
 import com.orgzly.android.ui.MainActivity;
-import com.orgzly.android.ui.ReposActivity;
+import com.orgzly.android.ui.repos.ReposActivity;
 
 import org.hamcrest.Matcher;
 import org.junit.Rule;
@@ -34,12 +35,12 @@ import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.contrib.DrawerActions.open;
 import static android.support.test.espresso.contrib.PickerActions.setDate;
 import static android.support.test.espresso.contrib.PickerActions.setTime;
-import static android.support.test.espresso.matcher.RootMatchers.isDialog;
 import static android.support.test.espresso.matcher.ViewMatchers.isDescendantOfA;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withClassName;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static com.orgzly.android.espresso.EspressoUtils.clickClickableSpan;
 import static com.orgzly.android.espresso.EspressoUtils.closeSoftKeyboardWithDelay;
 import static com.orgzly.android.espresso.EspressoUtils.isHighlighted;
 import static com.orgzly.android.espresso.EspressoUtils.onActionItemClick;
@@ -53,7 +54,6 @@ import static com.orgzly.android.espresso.EspressoUtils.toPortrait;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
@@ -125,7 +125,8 @@ public class MiscTest extends OrgzlyTest {
         onView(allOf(withText("book-two"), isDisplayed())).perform(click());
         onView(withText("Note #2.")).perform(click());
         onActionItemClick(R.id.activity_action_settings, R.string.settings);
-        EspressoUtils.tapToSetting(EspressoUtils.SETTINGS_CLEAR_DATABASE);
+        onData(PreferenceMatchers.withTitle(R.string.app)).perform(click());
+        onData(PreferenceMatchers.withTitle(R.string.clear_database)).perform(click());
         onView(withText(R.string.ok)).perform(click());
         pressBack();
         pressBack();
@@ -391,25 +392,25 @@ public class MiscTest extends OrgzlyTest {
         onView(withId(R.id.fragment_note_state_button)).perform(click());
         onView(withText("DONE")).perform(click());
 
-        onView(withId(R.id.fragment_note_closed_button)).check(matches(not(isDisplayed())));
+        onView(withId(R.id.fragment_note_closed_edit_text)).check(matches(not(isDisplayed())));
         onView(withId(R.id.fragment_note_scheduled_button)).check(matches(withText(userDateTime("<2015-01-24 Sat 04:05 +6d>"))));
 
         /* DONE -> NOTE */
         onView(withId(R.id.fragment_note_state_button)).perform(click());
         onView(withText(R.string.clear)).perform(click());
-        onView(withId(R.id.fragment_note_closed_button)).check(matches(not(isDisplayed())));
+        onView(withId(R.id.fragment_note_closed_edit_text)).check(matches(not(isDisplayed())));
         onView(withId(R.id.fragment_note_scheduled_button)).check(matches(withText(userDateTime("<2015-01-24 Sat 04:05 +6d>"))));
 
         /* NOTE -> DONE */
         onView(withId(R.id.fragment_note_state_button)).perform(click());
         onView(withText("DONE")).perform(click());
-        onView(withId(R.id.fragment_note_closed_button)).check(matches(not(isDisplayed())));
+        onView(withId(R.id.fragment_note_closed_edit_text)).check(matches(not(isDisplayed())));
         onView(withId(R.id.fragment_note_scheduled_button)).check(matches(withText(userDateTime("<2015-01-30 Fri 04:05 +6d>"))));
 
         /* NOTE -> OLD */
         onView(withId(R.id.fragment_note_state_button)).perform(click());
         onView(withText("OLD")).perform(click());
-        onView(withId(R.id.fragment_note_closed_button)).check(matches(not(isDisplayed())));
+        onView(withId(R.id.fragment_note_closed_edit_text)).check(matches(not(isDisplayed())));
         onView(withId(R.id.fragment_note_scheduled_button)).check(matches(withText(userDateTime("<2015-02-05 Thu 04:05 +6d>"))));
     }
 
@@ -499,16 +500,16 @@ public class MiscTest extends OrgzlyTest {
         rule.launchActivity(null);
 
         // List of repos
-        fragmentTest(rule, false, withId(R.id.fragment_repos_flipper));
+        fragmentTest(rule, false, withId(R.id.activity_repos_flipper));
 
         // Directory repo
         onListItem(1).perform(click());
-        fragmentTest(rule, false, withId(R.id.fragment_repo_directory_container));
+        fragmentTest(rule, false, withId(R.id.activity_repo_directory_container));
         pressBack();
 
         // Dropbox repo
         onListItem(0).perform(click());
-        fragmentTest(rule, false, withId(R.id.fragment_repo_dropbox_container));
+        fragmentTest(rule, false, withId(R.id.activity_repo_dropbox_container));
     }
 
     private void fragmentTest(ActivityTestRule rule, boolean hasSearchMenuItem, Matcher<View> matcher) {
@@ -677,5 +678,17 @@ public class MiscTest extends OrgzlyTest {
         onView(withId(R.id.drawer_layout)).perform(open());
         onView(allOf(withText("booky-one"), isDescendantOfA(withId(R.id.drawer_navigation_view)))).perform(click());
         onView(withId(R.id.fragment_book_view_flipper)).check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void testCheckboxInTitle() {
+        shelfTestUtils.setupBook("book-name", "* - [ ] Checkbox");
+        activityRule.launchActivity(null);
+
+        onView(allOf(withText("book-name"), isDisplayed())).perform(click());
+
+        onListItem(0).onChildView(withId(R.id.item_head_title)).perform(clickClickableSpan("[ ]"));
+
+        onView(withId(R.id.fragment_note_container)).check(matches(isDisplayed()));
     }
 }

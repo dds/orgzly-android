@@ -1,11 +1,9 @@
 package com.orgzly.android.espresso;
 
 import android.content.Intent;
-import android.os.Environment;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
+import android.support.test.espresso.matcher.PreferenceMatchers;
 import android.support.test.rule.ActivityTestRule;
-import android.support.test.uiautomator.UiDevice;
 
 import com.orgzly.R;
 import com.orgzly.android.AppIntent;
@@ -16,14 +14,9 @@ import com.orgzly.android.ui.MainActivity;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 
-import java.io.File;
 import java.io.IOException;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
 import static android.support.test.espresso.Espresso.onData;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.Espresso.pressBack;
@@ -44,7 +37,6 @@ import static com.orgzly.android.espresso.EspressoUtils.listViewItemCount;
 import static com.orgzly.android.espresso.EspressoUtils.onActionItemClick;
 import static com.orgzly.android.espresso.EspressoUtils.onList;
 import static com.orgzly.android.espresso.EspressoUtils.onListItem;
-import static com.orgzly.android.espresso.EspressoUtils.onSpinnerString;
 import static com.orgzly.android.espresso.EspressoUtils.settingsSetTodoKeywords;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
@@ -75,13 +67,11 @@ public class SyncingTest extends OrgzlyTest {
 
         onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
-        onView(withText(R.string.no_link)).check(matches(isDisplayed())); // Current value
-        onView(withId(R.id.dialog_spinner)).perform(click()); // Open spinner
-        onSpinnerString("mock://repo-a").perform(click());
-        onView(withText(R.string.set)).perform(click());
+        onView(withText("mock://repo-a")).perform(click());
 
         onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_force_load)).perform(click());
+        onView(withText(R.string.overwrite)).perform(click());
         onListItem(0).onChildView(withId(R.id.item_book_last_action))
                 .check(matches((withText(containsString(context.getString(R.string.force_loaded_from_uri, "mock://repo-a/booky.org"))))));
 
@@ -98,8 +88,10 @@ public class SyncingTest extends OrgzlyTest {
 
         // Set preference
         onActionItemClick(R.id.activity_action_settings, R.string.settings);
-        EspressoUtils.tapToSetting(EspressoUtils.SETTINGS_AUTO_SYNC_TOGGLE);
-        EspressoUtils.tapLastSetting(EspressoUtils.SETTINGS_AUTO_SYNC_NOTE_CREATED);
+        onData(PreferenceMatchers.withTitle(R.string.sync)).perform(click());
+        onData(PreferenceMatchers.withTitle(R.string.auto_sync_experimental)).perform(click());
+        onData(PreferenceMatchers.withTitle(R.string.auto_sync)).perform(click());
+        onData(PreferenceMatchers.withTitle(R.string.pref_title_sync_after_note_create)).perform(click());
         pressBack();
         pressBack();
         pressBack();
@@ -133,6 +125,7 @@ public class SyncingTest extends OrgzlyTest {
         activityRule.launchActivity(null);
         onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_force_load)).perform(click());
+        onView(withText(R.string.overwrite)).perform(click());
         onView(withText(endsWith(context.getString(R.string.message_book_has_no_link)))).check(matches(isDisplayed()));
     }
 
@@ -145,6 +138,7 @@ public class SyncingTest extends OrgzlyTest {
 
         onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_force_load)).perform(click());
+        onView(withText(R.string.overwrite)).perform(click());
         onView(withText(endsWith(context.getString(R.string.message_book_has_no_link))))
                 .check(matches(isDisplayed()));
     }
@@ -162,17 +156,16 @@ public class SyncingTest extends OrgzlyTest {
 
         onView(allOf(withText("book-one"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
-        onView(withText(R.string.no_link)).check(matches(isDisplayed())); // Current value
-        onView(withId(R.id.dialog_spinner)).perform(click()); // Open spinner
-        onSpinnerString("mock://repo-a").perform(click());
-        onView(withText(R.string.set)).perform(click());
+        onView(withText("mock://repo-a")).perform(click());
 
         onView(allOf(withText("book-one"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_force_load)).perform(click());
+        onView(withText(R.string.overwrite)).perform(click());
         onView(withText(containsString(context.getString(R.string.force_loaded_from_uri, "mock://repo-a/book-one.org")))).check(matches(isDisplayed()));
 
         onView(allOf(withText("book-one"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_force_load)).perform(click());
+        onView(withText(R.string.overwrite)).perform(click());
         onView(withText(containsString(context.getString(R.string.force_loaded_from_uri, "mock://repo-a/book-one.org")))).check(matches(isDisplayed()));
     }
 
@@ -186,6 +179,7 @@ public class SyncingTest extends OrgzlyTest {
 
         onView(allOf(withText("book-one"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_force_save)).perform(click());
+        onView(withText(R.string.overwrite)).perform(click());
         onView(withText(endsWith(context.getString(R.string.force_saving_failed, context.getString(R.string.multiple_repos))))).check(matches(isDisplayed()));
     }
 
@@ -196,6 +190,7 @@ public class SyncingTest extends OrgzlyTest {
         activityRule.launchActivity(null);
         onView(allOf(withText("book-one"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_force_save)).perform(click());
+        onView(withText(R.string.overwrite)).perform(click());
         onView(withText(endsWith(context.getString(R.string.force_saving_failed, context.getString(R.string.no_repos))))).check(matches(isDisplayed()));
     }
 
@@ -208,6 +203,7 @@ public class SyncingTest extends OrgzlyTest {
 
         onView(allOf(withText("book-one"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_force_save)).perform(click());
+        onView(withText(R.string.overwrite)).perform(click());
         onView(withText(containsString(context.getString(R.string.force_saved_to_uri, "mock://repo-a/book-one.org")))).check(matches(isDisplayed()));
     }
 
@@ -219,6 +215,7 @@ public class SyncingTest extends OrgzlyTest {
 
         onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_force_save)).perform(click());
+        onView(withText(R.string.overwrite)).perform(click());
         onView(withText(containsString(context.getString(R.string.force_saved_to_uri, "mock://repo-a/booky.org")))).check(matches(isDisplayed()));
     }
 
@@ -373,10 +370,7 @@ public class SyncingTest extends OrgzlyTest {
         /* Set link to repo-b. */
         onView(allOf(withText("book-1"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
-        onView(withText(R.string.no_link)).check(matches(isDisplayed())); // Current value
-        onView(withId(R.id.dialog_spinner)).perform(click()); // Open spinner
-        onSpinnerString("mock://repo-b").perform(click());
-        onView(withText(R.string.set)).perform(click());
+        onView(withText("mock://repo-b")).perform(click());
 
         onListItem(0).onChildView(withId(R.id.item_book_link_repo)).check(matches(withText("mock://repo-b")));
 
@@ -392,10 +386,7 @@ public class SyncingTest extends OrgzlyTest {
         /* Set link to repo-a. */
         onView(allOf(withText("book-1"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
-        onView(withText("mock://repo-b")).check(matches(isDisplayed())); // Current value
-        onView(withId(R.id.dialog_spinner)).perform(click()); // Open spinner
-        onSpinnerString("mock://repo-a").perform(click());
-        onView(withText(R.string.set)).perform(click());
+        onView(withText("mock://repo-a")).perform(click());
 
         onListItem(0).onChildView(withId(R.id.item_book_link_repo)).check(matches(withText("mock://repo-a")));
 
@@ -496,9 +487,10 @@ public class SyncingTest extends OrgzlyTest {
 
         /* Rename repository. */
         onActionItemClick(R.id.activity_action_settings, R.string.settings);
-        EspressoUtils.tapToSetting(EspressoUtils.SETTINGS_REPOS);
+        onData(PreferenceMatchers.withTitle(R.string.sync)).perform(click());
+        onData(PreferenceMatchers.withTitle(R.string.repos_preference_title)).perform(click());
         onListItem(0).perform(click());
-        onView(withId(R.id.fragment_repo_dropbox_directory)).perform(replaceText("repo-b"));
+        onView(withId(R.id.activity_repo_dropbox_directory)).perform(replaceText("repo-b"));
         onActionItemClick(R.id.done, R.string.done);
         pressBack();
         pressBack();
@@ -509,10 +501,7 @@ public class SyncingTest extends OrgzlyTest {
 
         onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
-        onView(withText(R.string.no_link)).check(matches(isDisplayed())); // Current value
-        onView(withId(R.id.dialog_spinner)).perform(click()); // Open spinner
-        onSpinnerString("dropbox:/repo-b").perform(click());
-        onView(withText(R.string.set)).perform(click());
+        onView(withText("dropbox:/repo-b")).perform(click());
 
         onListItem(0).onChildView(withId(R.id.item_book_link_repo)).check(matches(allOf(withText("dropbox:/repo-b"), isDisplayed())));
         onListItem(0).onChildView(withId(R.id.item_book_synced_url)).check(matches(allOf(withText("mock://repo-a/booky.org"), isDisplayed())));
@@ -534,27 +523,19 @@ public class SyncingTest extends OrgzlyTest {
 
         onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
-        onView(withText(R.string.no_link)).check(matches(isDisplayed())); // Current value
-        onView(withId(R.id.dialog_spinner)).perform(click()); // Open spinner
-        onSpinnerString("mock://repo-a").perform(click());
-        onView(withText(R.string.set)).perform(click());
+        onView(withText("mock://repo-a")).perform(click());
 
-        onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
-        onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
-        onView(withText("mock://repo-a")).check(matches(isDisplayed())); // Current value
-
-        onView(withId(R.id.dialog_spinner)).perform(click()); // Open spinner
-        onSpinnerString("mock://repo-a").perform(click());
-        onView(withText(R.string.cancel)).perform(click());
+        onListItem(0).onChildView(withId(R.id.item_book_link_repo)).check(matches(allOf(withText("mock://repo-a"), isDisplayed())));
 
         /* Rename all repositories. */
         onActionItemClick(R.id.activity_action_settings, R.string.settings);
-        EspressoUtils.tapToSetting(EspressoUtils.SETTINGS_REPOS);
+        onData(PreferenceMatchers.withTitle(R.string.sync)).perform(click());
+        onData(PreferenceMatchers.withTitle(R.string.repos_preference_title)).perform(click());
         onListItem(0).perform(click());
-        onView(withId(R.id.fragment_repo_dropbox_directory)).perform(replaceText("repo-1"));
+        onView(withId(R.id.activity_repo_dropbox_directory)).perform(replaceText("repo-1"));
         onActionItemClick(R.id.done, R.string.done);
         onListItem(0).perform(click());
-        onView(withId(R.id.fragment_repo_dropbox_directory)).perform(replaceText("repo-2"));
+        onView(withId(R.id.activity_repo_dropbox_directory)).perform(replaceText("repo-2"));
         onActionItemClick(R.id.done, R.string.done);
         pressBack();
         pressBack();
@@ -563,9 +544,7 @@ public class SyncingTest extends OrgzlyTest {
         onView(withId(R.id.drawer_layout)).perform(open());
         onView(allOf(withText(R.string.notebooks), isDescendantOfA(withId(R.id.drawer_navigation_view)))).perform(click());
 
-        onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
-        onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
-        onView(withText(R.string.no_link)).check(matches(isDisplayed())); // Current value
+        onListItem(0).onChildView(withId(R.id.item_book_link_repo)).check(matches(not(isDisplayed())));
     }
 
     @Test
@@ -578,9 +557,7 @@ public class SyncingTest extends OrgzlyTest {
 
         onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
-        onView(withId(R.id.dialog_spinner)).perform(click()); // Open spinner
-        onSpinnerString(activityRule.getActivity().getString(R.string.no_link)).perform(click());
-        onView(withText(R.string.set)).perform(click());
+        onView(withText(R.string.remove_notebook_link)).perform(click());
 
         onListItem(0).onChildView(withId(R.id.item_book_link_container)).check(matches(not(isDisplayed())));
     }
@@ -598,9 +575,7 @@ public class SyncingTest extends OrgzlyTest {
 
         onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
         onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
-        onView(withId(R.id.dialog_spinner)).perform(click()); // Open spinner
-        onSpinnerString("mock://repo-a").perform(click());
-        onView(withText(R.string.set)).perform(click());
+        onView(withText("mock://repo-a")).perform(click());
 
         onListItem(0).onChildView(withId(R.id.item_book_link_repo)).check(matches(allOf(withText("mock://repo-a"), isDisplayed())));
         onListItem(0).onChildView(withId(R.id.item_book_synced_url)).check(matches(allOf(withText("mock://repo-a/booky.org.txt"), isDisplayed())));

@@ -40,7 +40,7 @@ import com.orgzly.android.provider.views.DbBookViewColumns;
 import com.orgzly.android.ui.Fab;
 import com.orgzly.android.ui.FragmentListener;
 import com.orgzly.android.ui.Loaders;
-import com.orgzly.android.ui.drawer.DrawerListed;
+import com.orgzly.android.ui.drawer.DrawerItem;
 import com.orgzly.android.util.LogUtils;
 
 /**
@@ -51,7 +51,7 @@ public class BooksFragment extends ListFragment
         implements
         Fab,
         LoaderManager.LoaderCallbacks<Cursor>,
-        DrawerListed {
+        DrawerItem {
 
     private static final String TAG = BooksFragment.class.getName();
 
@@ -587,7 +587,8 @@ public class BooksFragment extends ListFragment
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         /* Get ID of the item. */
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        AdapterView.AdapterContextMenuInfo info =
+                (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         long bookId = info.id;
 
         switch (item.getItemId()) {

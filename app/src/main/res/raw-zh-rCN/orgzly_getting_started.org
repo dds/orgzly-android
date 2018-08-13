@@ -1,71 +1,79 @@
-Welcome to Orgzly!
+欢迎使用Orgzly！
 
-* Notes
-** Click on the note to open it
-** Click and hold the note to select it
+* 笔记
+** 点击笔记来打开它
+** 点击并长按笔记来选择它
 
-You can select multiple notes.
+您可以选择多条笔记。
 
-** Fling note right to open its quick-menu
+** 右划笔记以打开它的快捷菜单
 
-Fling it left to open a different menu.
+左划笔记来打开一个不同的菜单。
 
-** Fold a note which contains sub-notes by clicking the icon next to it
-*** There is no limit in number of levels you can have
-**** Use this to better organize your notes
+** 点击笔记旁的图标可收起包含子笔记的笔记
+*** 层级的数量没有限制
+**** 以此来更好地组织您的笔记
 
-** Note can have tags :tag1:tag2:
-*** Sub-note inherits the tags :tag3:
+** 笔记可以具有标签：标签1：标签2：
+*** 子笔记继承标签：标签3：
 
-If you search for notes with tag “tag1”, this note will be returned as well.
+如果您搜索具有标签“标签1”的笔记，这条笔记也将被作为结果返回。
 
-** TODO Note can have a state
+** 待办 笔记可以具有一种状态
 
-You can configure any number of states to use: TODO, NEXT, DONE, etc.
+您可以配置任意数量的状态来使用：待办，接下来，完成，等。
 
-*** There are two /types/ of states: to-do and done
+*** 有两种/类型/的状态：待办和完成
 
-*** DONE This is a note with /done/ type of state
+*** 完成 这是一条具有/完成/类型状态的笔记
 CLOSED: [2018-01-24 Wed 17:00]
 
-** Note can have a scheduled time
+** 笔记可以有一个计划时间
 SCHEDULED: <2015-02-20 Fri 15:15>
 
-*** Times can have a repeater
+*** 时间可以设定一个重复器
 SCHEDULED: <2015-02-16 Mon .+1d>
 
-** You can also set a deadline time
+** 您也可以设定一个截止时间
 DEADLINE: <2015-02-20 Fri>
 
-** Note can use links
+** 笔记可以使用链接
 
-Dial a phone number (tel:555-2368) or [[sms:555-2368][send SMS]].
+拨打电话号码(tel:555-2368) 或 [[sms:555-2368][发送短信]]。
 
-Send email to [[mailto:support@orgzly.com][support@orgzly.com]], visit http://www.orgzly.com or read [[http://www.orgzly.com/help][documentation]].
+发送邮件到 [[mailto:support@orgzly.com][support@orgzly.com]]，访问 http://www.orgzly.com 或阅读[[http://www.orgzly.com/help][documentation]]。
 
-** Basic typographical emphasis is supported
+** 支持基本的排版强调
 
-You can make words *bold*, /italic/, _underlined_, =verbatim=, ~code~ and +strike-through+.
+您可以使文字 *粗体* ， /斜体/ ， _下划线_ ， =逐字= ， ~代码~ 和 +删除线+ 。
 
-* Search
-** There are many search operators supported
+** 复选框列表可用
 
-You can search notes by state, tag, scheduled or deadline time etc.
+- [X] 任务 1
+- [ ] 任务 2
+- [ ] 任务 3
 
-See http://www.orgzly.com/help#search to learn more.
+点击复选框以切换。 轻按行尾的新建行按钮以创建新条目。
 
-** Search queries can be saved for quick access
+* 搜索
+** 支持大量搜索运算符
 
-Try sample searches from navigation drawer and note the queries they use.
+您可以通过状态，标签，计划时间或截止时间等搜索笔记。
 
-You can create your own saved searches by clicking on “Searches” in the navigation drawer.
+查看 http://www.orgzly.com/help#search 了解更多。
 
-* Syncing
+** 搜索查询串可以被保存以便快速访问
 
-** Notebooks can be saved as plain-text files
+从导航抽屉中尝试示例搜索并注意它们所使用的查询串。
 
-Files are in the format used by “Org mode”.
+您可以通过点击导航抽屉中的“搜索”来创建并保存自己的搜索。
 
-** Location (repository) type
+* 同步
 
-You can keep notebooks synced with a directory on your mobile device, SD card or Dropbox.
+** 笔记本可以被保存为纯文本文件
+
+文件使用“Org mode”的格式。
+
+** 位置(存储库)类型
+
+您可以使笔记本与您的移动设备，SD卡或Dropbox上的一个目录保持同步。

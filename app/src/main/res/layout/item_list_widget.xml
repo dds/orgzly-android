@@ -21,41 +21,49 @@
         android:paddingBottom="4dp"
         android:layout_weight="1">
 
+        <!-- Title -->
+        <TextView
+            android:id="@+id/item_list_widget_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            tools:text="@string/head_title_sample"
+            android:textColor="@color/widget_light_title_color"
+            android:textSize="@dimen/widget_title_text_size_14"
+            android:maxLines="1" />
+
+        <!-- Notebook name -->
         <LinearLayout
+            android:id="@+id/item_list_widget_book"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:id="@+id/item_list_widget_title"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                tools:text="@string/head_title_sample"
-                android:textColor="@color/black"
-                android:textSize="16sp"
-                android:maxLines="1" />
+            android:layout_marginTop="@dimen/item_head_below_title_padding_cozy"
+            android:gravity="center_vertical"
+            android:visibility="visible">
 
             <ImageView
-                android:id="@+id/item_list_widget_done"
-                style="?android:attr/borderlessButtonStyle"
-                android:minHeight="0dp"
-                android:minWidth="0dp"
-                android:paddingTop="0dp"
-                android:paddingBottom="0dp"
-                android:paddingLeft="2dp"
-                android:paddingRight="2dp"
+                android:id="@+id/item_list_widget_book_icon"
+                android:layout_height="14dp"
+                android:layout_width="14dp"
+                android:alpha="0.55"
+                android:src="@drawable/ic_folder_open_black_18dp"
+                android:contentDescription="@string/notebook" />
+
+            <TextView
+                android:id="@+id/item_list_widget_book_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="4dp"
+                tools:text="@string/book_name_sample"
+                android:textColor="@color/widget_light_post_title_color"
+                android:textSize="@dimen/widget_post_title_text_size_14"
                 android:layout_marginStart="4dp"
-                android:src="@drawable/ic_done_black_24dp"
-                android:tint="#444444"/>
-
+                android:layout_marginLeft="4dp"
+                android:maxLines="1"
+                android:ellipsize="end" />
         </LinearLayout>
 
+        <!-- Scheduled time -->
         <LinearLayout
             android:id="@+id/item_list_widget_scheduled"
             android:layout_width="match_parent"
@@ -66,6 +74,7 @@
             android:visibility="visible">
 
             <ImageView
+                android:id="@+id/item_list_widget_scheduled_icon"
                 android:layout_height="14dp"
                 android:layout_width="14dp"
                 android:alpha="0.55"
@@ -77,14 +86,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:text="@string/note_scheduled_sample"
-                android:textColor="#696969"
-                android:textSize="14sp"
+                android:textColor="@color/widget_light_post_title_color"
+                android:textSize="@dimen/widget_post_title_text_size_14"
                 android:layout_marginStart="4dp"
                 android:layout_marginLeft="4dp"
                 android:maxLines="1"
-                android:ellipsize="end"/>
+                android:ellipsize="end" />
         </LinearLayout>
 
+        <!-- Deadline time -->
         <LinearLayout
             android:id="@+id/item_list_widget_deadline"
             android:layout_width="match_parent"
@@ -95,6 +105,7 @@
             android:visibility="gone">
 
             <ImageView
+                android:id="@+id/item_list_widget_deadline_icon"
                 android:layout_height="14dp"
                 android:layout_width="14dp"
                 android:alpha="0.55"
@@ -106,14 +117,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:text="@string/note_deadline_sample"
-                android:textColor="#696969"
-                android:textSize="14sp"
+                android:textColor="@color/widget_light_post_title_color"
+                android:textSize="@dimen/widget_post_title_text_size_14"
                 android:layout_marginStart="4dp"
                 android:layout_marginLeft="4dp"
                 android:maxLines="1"
                 android:ellipsize="end" />
         </LinearLayout>
 
+        <!-- Closed time -->
         <LinearLayout
             android:id="@+id/item_list_widget_closed"
             android:layout_width="match_parent"
@@ -124,6 +136,7 @@
             android:visibility="gone">
 
             <ImageView
+                android:id="@+id/item_list_widget_closed_icon"
                 android:layout_height="14dp"
                 android:layout_width="14dp"
                 android:alpha="0.55"
@@ -135,12 +148,27 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:text="@string/note_closed_sample"
-                android:textColor="#696969"
-                android:textSize="14sp"
+                android:textColor="@color/widget_light_post_title_color"
+                android:textSize="@dimen/widget_post_title_text_size_14"
                 android:layout_marginStart="4dp"
                 android:layout_marginLeft="4dp"
                 android:maxLines="1"
                 android:ellipsize="end" />
         </LinearLayout>
     </LinearLayout>
+
+    <!-- Checkmark -->
+    <ImageView
+        android:id="@+id/item_list_widget_done"
+        style="?android:attr/borderlessButtonStyle"
+        android:alpha="0.87"
+        android:minHeight="0dp"
+        android:minWidth="0dp"
+        android:paddingTop="@dimen/widget_padding"
+        android:paddingBottom="0dp"
+        android:paddingLeft="4dp"
+        android:paddingRight="4dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_done_black_24dp" />
 </LinearLayout>

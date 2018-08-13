@@ -1,16 +1,16 @@
 package com.orgzly.android.util
 
 import android.content.Context
-import android.content.Intent
 import android.graphics.Typeface
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.*
 import android.view.View
-import com.orgzly.android.ActionService
-import com.orgzly.android.AppIntent
+import com.orgzly.BuildConfig
 import com.orgzly.android.prefs.AppPreferences
+import com.orgzly.android.ui.views.TextViewWithMarkup
+import com.orgzly.android.ui.views.style.CheckboxSpan
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -43,44 +43,64 @@ object OrgFormatter {
     private const val BORDER = "\\S"
     private const val BODY = ".*?(?:\n.*?)?"
 
-    private fun markupRegex(marker: Char): String =
-            "(?:^|\\G|[$PRE])([$marker]($BORDER|$BORDER$BODY$BORDER)[$marker])(?:[$POST]|$)"
+    private const val MARKUP_CHARS = "*/_=~+"
 
     private val MARKUP_PATTERN = Pattern.compile(
-            markupRegex('*') + "|" +
-                    markupRegex('/') + "|" +
-                    markupRegex('_') + "|" +
-                    markupRegex('=') + "|" +
-                    markupRegex('~') + "|" +
-                    markupRegex('+'), Pattern.MULTILINE)
+            "(?:^|\\G|[$PRE])(([$MARKUP_CHARS])($BORDER|$BORDER$BODY$BORDER)\\2)(?:[$POST]|$)",
+            Pattern.MULTILINE)
+
+    const val LAST_REPEAT_PROPERTY = "LAST_REPEAT"
+
+    private const val LOGBOOK_DRAWER_NAME = "LOGBOOK"
+
+    private fun drawerPattern(name: String) = Pattern.compile(
+            """^[ \t]*:($name):[ \t]*\n(.*?)\n[ \t]*:END:[ \t]*$""",
+            Pattern.CASE_INSENSITIVE or Pattern.MULTILINE or Pattern.DOTALL)
+
+    private val ANY_DRAWER_PATTERN = drawerPattern("[-a-zA-Z_0-9]+")
+    private val LOGBOOK_DRAWER_PATTERN = drawerPattern(LOGBOOK_DRAWER_NAME)
 
     private fun namelessBracketLinkPattern(str: String) = Pattern.compile("\\[\\[$str]]")
     private fun namedBracketLinkPattern(str: String) = Pattern.compile("\\[\\[$str]\\[([^]]+)]]")
 
+    private val CHECKBOXES_PATTERN = Pattern.compile("""^\s*-\s+(\[[ X]])""", Pattern.MULTILINE)
+
     private const val FLAGS = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
 
-    data class SpanRegion(val start: Int, val end: Int, val content: String, val span: Any? = null)
+    private data class SpanRegion(
+            val start: Int,
+            val end: Int,
+            val content: CharSequence,
+            val spans: List<Any?> = listOf())
 
-    data class Config(val style: Boolean = true, val withMarks: Boolean = false, val linkify: Boolean = true) {
-        constructor(context: Context, linkify: Boolean): this(
-                AppPreferences.styleText(context),
-                AppPreferences.styledTextWithMarks(context),
-                linkify)
+    private data class Config(
+            val style: Boolean = true,
+            val withMarks: Boolean = false,
+            val foldDrawers: Boolean = true,
+            val linkify: Boolean = true,
+            val parseCheckboxes: Boolean = true) {
+
+        constructor(context: Context?, linkify: Boolean, parseCheckboxes: Boolean): this(
+                context != null && AppPreferences.styleText(context),
+                context != null && AppPreferences.styledTextWithMarks(context),
+                context != null && AppPreferences.drawersFolded(context),
+                linkify,
+                parseCheckboxes)
     }
 
+    @JvmStatic
     @JvmOverloads
-    fun parse(str: String, context: Context? = null, linkify: Boolean = true): SpannableStringBuilder {
-        val config = if (context == null) {
-            Config(linkify = linkify)
-        } else {
-            Config(context, linkify)
-        }
-
-        return this.parse(str, config)
+    fun parse(str: String, context: Context? = null, linkify: Boolean = true, parseCheckboxes: Boolean = true): SpannableStringBuilder {
+        return this.parse(str, Config(context, linkify, parseCheckboxes))
     }
 
-    fun parse(str: String, config: Config): SpannableStringBuilder {
+    private fun parse(str: String, config: Config): SpannableStringBuilder {
         var ssb = SpannableStringBuilder(str)
+
+        /* Must be first, since checkboxes need to know their position in str. */
+        if (config.parseCheckboxes) {
+            parseCheckboxes(ssb)
+        }
 
         ssb = parsePropertyLinks(ssb, CUSTOM_ID_LINK, "CUSTOM_ID", config.linkify)
         ssb = parsePropertyLinks(ssb, ID_LINK, "ID", config.linkify)
@@ -93,6 +113,8 @@ object OrgFormatter {
         parsePlainLinks(ssb, PLAIN_LINK, config.linkify)
 
         ssb = parseMarkup(ssb, config)
+
+        ssb = parseDrawers(ssb, config.foldDrawers)
 
         return ssb
     }
@@ -119,7 +141,7 @@ object OrgFormatter {
 
                 val span = if (linkify) URLSpan(link) else null
 
-                spanRegions.add(SpanRegion(m.start(), m.end(), name, span))
+                spanRegions.add(SpanRegion(m.start(), m.end(), name, listOf(span)))
             }
         }
     }
@@ -137,7 +159,7 @@ object OrgFormatter {
 
                 val span = if (linkify) URLSpan(link) else null
 
-                spanRegions.add(SpanRegion(m.start(), m.end(), link, span))
+                spanRegions.add(SpanRegion(m.start(), m.end(), link, listOf(span)))
             }
         }
     }
@@ -169,11 +191,9 @@ object OrgFormatter {
                 val span = if (linkify) {
                     object : ClickableSpan() {
                         override fun onClick(widget: View) {
-                            val intent = Intent(widget.context, ActionService::class.java)
-                            intent.action = AppIntent.ACTION_OPEN_NOTE
-                            intent.putExtra(AppIntent.EXTRA_PROPERTY_NAME, propName)
-                            intent.putExtra(AppIntent.EXTRA_PROPERTY_VALUE, propValue)
-                            ActionService.enqueueWork(widget.context, intent)
+                            if (widget is TextViewWithMarkup) {
+                                widget.openNoteWithProperty(propName, propValue)
+                            }
                         }
                     }
 
@@ -181,7 +201,7 @@ object OrgFormatter {
                     null
                 }
 
-                spanRegions.add(SpanRegion(m.start(), m.end(), link, span))
+                spanRegions.add(SpanRegion(m.start(), m.end(), link, listOf(span)))
             }
         }
     }
@@ -213,6 +233,36 @@ object OrgFormatter {
         STRIKETHROUGH
     }
 
+    /**
+     * @return Number of types found
+     */
+    private fun spanTypes(str: String, f: (SpanType) -> Any): Int {
+        var found = 0
+
+        for (i in 0 until str.length/2) {
+            val fst = str[i]
+            val lst = str[str.length - 1 - i]
+
+            if (fst == lst) {
+                val type = when (fst) {
+                    '*' -> SpanType.BOLD
+                    '/' -> SpanType.ITALIC
+                    '_' -> SpanType.UNDERLINE
+                    '=' -> SpanType.MONOSPACE
+                    '~' -> SpanType.MONOSPACE
+                    '+' -> SpanType.STRIKETHROUGH
+                    else -> return found
+                }
+
+                f(type)
+
+                found++
+            }
+        }
+
+        return found
+    }
+
     private fun newSpan(type: SpanType): Any {
         return when (type) {
             SpanType.BOLD -> StyleSpan(Typeface.BOLD)
@@ -230,17 +280,29 @@ object OrgFormatter {
 
         val spanRegions: MutableList<SpanRegion> = mutableListOf()
 
-        fun setMarkupSpan(matcher: Matcher, group: Int, spanType: SpanType) {
+        fun setMarkupSpan(matcher: Matcher) {
             // if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Type matched", matcher.start(group), matcher.end(group))
 
+            val str = matcher.group(1)
+            val start = matcher.start(1)
+            val end = matcher.end(1)
+
             if (config.withMarks) {
-                ssb.setSpan(newSpan(spanType), matcher.start(group), matcher.end(group), FLAGS)
+                spanTypes(str) { type ->
+                    ssb.setSpan(newSpan(type), start, end, FLAGS)
+                }
 
             } else {
-                // Next group matches content only, without markers.
-                val content = matcher.group(group + 1)
+                val spans = mutableListOf<Any>()
 
-                spanRegions.add(SpanRegion(matcher.start(group), matcher.end(group), content, newSpan(spanType)))
+                val found = spanTypes(str) {
+                    spans.add(newSpan(it))
+                }
+
+                // Content only, without markers
+                val content = str.substring(found, str.length - found)
+
+                spanRegions.add(SpanRegion(start, end, content, spans))
             }
         }
 
@@ -248,18 +310,51 @@ object OrgFormatter {
 
         while (m.find()) {
             // if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Matched", ssb.toString(), MARKUP_PATTERN, m.groupCount(), m.group(), m.start(), m.end())
-
-            when {
-                m.group(1)  != null -> setMarkupSpan(m,  1, SpanType.BOLD)
-                m.group(3)  != null -> setMarkupSpan(m,  3, SpanType.ITALIC)
-                m.group(5)  != null -> setMarkupSpan(m,  5, SpanType.UNDERLINE)
-                m.group(7)  != null -> setMarkupSpan(m,  7, SpanType.MONOSPACE)
-                m.group(9)  != null -> setMarkupSpan(m,  9, SpanType.MONOSPACE)
-                m.group(11) != null -> setMarkupSpan(m, 11, SpanType.STRIKETHROUGH)
-            }
+            setMarkupSpan(m)
         }
 
         return buildFromRegions(ssb, spanRegions)
+    }
+
+    /**
+     * Parse checkboxes and add CheckboxSpans to ssb
+     */
+    private fun parseCheckboxes(ssb: SpannableStringBuilder) {
+        val m = CHECKBOXES_PATTERN.matcher(ssb)
+
+        while (m.find()) {
+            val content = m.group(1)
+            val start = m.start(1)
+            val end = m.end(1)
+            ssb.setSpan(CheckboxSpan(content, start, end), start, end, FLAGS)
+            ssb.setSpan(TypefaceSpan("monospace"), start, end, FLAGS)
+            ssb.setSpan(StyleSpan(Typeface.BOLD), start, end, FLAGS)
+        }
+    }
+
+    private fun parseDrawers(ssb: SpannableStringBuilder, foldDrawers: Boolean): SpannableStringBuilder {
+        val m = ANY_DRAWER_PATTERN.matcher(ssb)
+
+        return collectRegions(ssb) { spanRegions ->
+            while (m.find()) {
+                val name = m.group(1)
+
+                // Use subSequence to keep existing spans
+                val contentStart = m.start(2)
+                val contentEnd = m.end(2)
+                val content = ssb.subSequence(contentStart, contentEnd)
+
+
+                // if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Found drawer", name, content, "All:'${m.group(0)}'")
+
+                val drawerSpanned = TextViewWithMarkup.drawerSpanned(name, content, foldDrawers)
+
+                val start = if (m.group(0).startsWith("\n")) m.start() + 1 else m.start()
+                val end = if (m.group(0).endsWith("\n")) m.end() - 1 else m.end()
+
+                spanRegions.add(SpanRegion(start, end, drawerSpanned))
+            }
+        }
     }
 
     private fun collectRegions(ssb: SpannableStringBuilder, collect: (MutableList<SpanRegion>) -> Any): SpannableStringBuilder {
@@ -285,8 +380,9 @@ object OrgFormatter {
                 // Create spanned string
                 val str = SpannableString(region.content)
 
-                if (region.span != null) {
-                    str.setSpan(region.span, 0, str.length, FLAGS)
+                // Set spans
+                region.spans.forEach { span ->
+                    str.setSpan(span, 0, str.length, FLAGS)
                 }
 
                 // Append spanned string
@@ -308,5 +404,36 @@ object OrgFormatter {
         }
     }
 
-    // private val TAG = OrgFormatter::class.java.name
+    @JvmStatic
+    fun insertLogbookEntryLine(content: String?, entry: String): String {
+        return if (content.isNullOrEmpty()) {
+            insertLogbookEntryLineWithoutDrawer(content, entry)
+
+        } else {
+            val m = LOGBOOK_DRAWER_PATTERN.matcher(content)
+
+            if (m.find()) {
+                val start = m.start(2) // Content start
+                StringBuilder(content).insert(start, "$entry\n").toString()
+
+            } else {
+                insertLogbookEntryLineWithoutDrawer(content, entry)
+            }
+        }
+    }
+
+    private fun insertLogbookEntryLineWithoutDrawer(content: String?, entry: String): String {
+        val prefixedContent = if (content.isNullOrEmpty()) "" else "\n\n$content"
+        return ":$LOGBOOK_DRAWER_NAME:\n$entry\n:END:$prefixedContent"
+    }
+
+    @JvmStatic
+    fun stateChangeLine(fromState: String?, toState: String?, time: String): String {
+        val from = if (fromState.isNullOrEmpty()) "" else fromState
+        val to = if (toState.isNullOrEmpty()) "" else toState
+
+        return String.format("- State %-12s from %-12s %s", "\"$to\"", "\"$from\"", time)
+    }
+
+    private val TAG = OrgFormatter::class.java.name
 }

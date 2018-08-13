@@ -23,6 +23,7 @@ import com.orgzly.android.util.LogUtils
 object ActivityUtils {
     private val TAG = ActivityUtils::class.java.name
 
+    @JvmStatic
     fun closeSoftKeyboard(activity: Activity) {
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Hiding keyboard in activity " + activity)
 
@@ -33,6 +34,7 @@ object ActivityUtils {
         imm.hideSoftInputFromWindow(view.windowToken, 0)
     }
 
+    @JvmStatic
     fun openSoftKeyboard(activity: Activity, view: View) {
         if (view.requestFocus()) {
             if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Showing keyboard for view $view in activity $activity")
@@ -40,7 +42,7 @@ object ActivityUtils {
             Handler().postDelayed({
                 val imm = activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
-            }, 100)
+            }, 200)
 
         } else {
             Log.w(TAG, "Can't open keyboard because view " + view +
@@ -76,6 +78,7 @@ object ActivityUtils {
         activity.startActivity(intent)
     }
 
+    @JvmStatic
     fun mainActivityPendingIntent(context: Context, bookId: Long, noteId: Long): PendingIntent {
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, bookId, noteId)
 

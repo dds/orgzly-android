@@ -16,11 +16,8 @@ import com.orgzly.R;
 import com.orgzly.android.provider.clients.NotesClient;
 import com.orgzly.android.ui.ActionModeListener;
 import com.orgzly.android.ui.dialogs.TimestampDialogFragment;
-import com.orgzly.android.ui.drawer.DrawerListed;
+import com.orgzly.android.ui.drawer.DrawerItem;
 import com.orgzly.android.util.LogUtils;
-import com.orgzly.org.datetime.OrgDateTime;
-
-import java.util.TreeSet;
 
 /**
  * Displays search results.
@@ -29,7 +26,7 @@ abstract public class QueryFragment extends NoteListFragment
         implements
         TimestampDialogFragment.OnDateTimeSetListener,
         LoaderManager.LoaderCallbacks<Cursor>,
-        DrawerListed {
+        DrawerItem {
 
     private static final String TAG = QueryFragment.class.getName();
 
@@ -43,6 +40,10 @@ abstract public class QueryFragment extends NoteListFragment
     /** Currently active query. */
     protected String mQuery;
 
+    @Override
+    public NoteListFragmentListener getListener() {
+        return mListener;
+    }
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -120,36 +121,6 @@ abstract public class QueryFragment extends NoteListFragment
         mListener = null;
         mActionModeListener = null;
     }
-
-    @Override
-    public void onDateTimeSet(int id, TreeSet<Long> noteIds, OrgDateTime time) {
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, id, time);
-
-        switch (id) {
-            case R.id.query_cab_schedule:
-            case R.id.item_menu_schedule_btn:
-                mListener.onScheduledTimeUpdateRequest(noteIds, time);
-                break;
-        }
-    }
-
-    @Override
-    public void onDateTimeCleared(int id, TreeSet<Long> noteIds) {
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, id);
-
-        switch (id) {
-            case R.id.query_cab_schedule:
-            case R.id.item_menu_schedule_btn:
-                mListener.onScheduledTimeUpdateRequest(noteIds,  null);
-                break;
-        }
-    }
-
-    @Override
-    public void onDateTimeAborted(int id, TreeSet<Long> noteIds) {
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, id);
-    }
-
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {

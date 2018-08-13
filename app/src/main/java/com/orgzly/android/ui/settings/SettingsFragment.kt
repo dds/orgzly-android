@@ -1,6 +1,7 @@
 package com.orgzly.android.ui.settings
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
@@ -22,6 +23,7 @@ import com.orgzly.android.prefs.ListPreferenceWithValueAsSummary
 import com.orgzly.android.ui.NoteStates
 import com.orgzly.android.ui.util.ActivityUtils
 import com.orgzly.android.util.LogUtils
+import com.orgzly.android.widgets.ListWidgetProvider
 import java.util.*
 
 /**
@@ -42,7 +44,7 @@ class SettingsFragment : PreferenceFragment(), SharedPreferences.OnSharedPrefere
         val resourceName = arguments?.getString(ARG_RESOURCE)
 
         when (resourceName) {
-            null -> addPreferencesFromResource(R.xml.preferences) // Headings
+            null -> addPreferencesFromResource(R.xml.prefs) // Headings
 
             in PREFS_RESOURCES -> addPreferencesFromResource(PREFS_RESOURCES.getValue(resourceName))
         }
@@ -221,6 +223,18 @@ class SettingsFragment : PreferenceFragment(), SharedPreferences.OnSharedPrefere
             }
         }
 
+        /* Update widget for changed style. */
+        when (key) {
+            getString(R.string.pref_key_widget_color_scheme),
+            getString(R.string.pref_key_widget_font_size),
+            getString(R.string.pref_key_widget_opacity),
+            getString(R.string.pref_key_widget_update_frequency) -> {
+                val intent = Intent(context, ListWidgetProvider::class.java)
+                intent.action = AppIntent.ACTION_UPDATE_LAYOUT_LIST_WIDGET
+                context?.sendBroadcast(intent)
+            }
+        }
+
         /* Reminders for scheduled notes. Reset last run time. */
         if (getString(R.string.pref_key_use_reminders_for_scheduled_times) == key) {
             AppPreferences.reminderLastRunForScheduled(context, 0L)
@@ -248,7 +262,7 @@ class SettingsFragment : PreferenceFragment(), SharedPreferences.OnSharedPrefere
 
         if (scheduled != null && deadline != null) {
             val remindersEnabled = (scheduled as TwoStatePreference).isChecked
-                    || (deadline as TwoStatePreference).isChecked
+                                   || (deadline as TwoStatePreference).isChecked
 
             /* These do not exist on Oreo and later */
             findPreference(getString(R.string.pref_key_reminders_sound))?.isEnabled = remindersEnabled
@@ -323,6 +337,7 @@ class SettingsFragment : PreferenceFragment(), SharedPreferences.OnSharedPrefere
         /* Using headers file & fragments didn't work well - transitions were
          * not smooth, previous fragment would be briefly displayed.
          */
+        @JvmStatic
         val PREFS_RESOURCES: HashMap<String, Int> = hashMapOf(
                 "prefs_screen_look_and_feel" to R.xml.prefs_screen_look_and_feel,
                 "prefs_screen_notebooks" to R.xml.prefs_screen_notebooks,
@@ -332,6 +347,7 @@ class SettingsFragment : PreferenceFragment(), SharedPreferences.OnSharedPrefere
                 "prefs_screen_auto_sync" to R.xml.prefs_screen_auto_sync, // Sub-screen
                 "prefs_screen_org_file_format" to R.xml.prefs_screen_org_file_format, // Sub-screen
                 "prefs_screen_org_mode_tags_indent" to R.xml.prefs_screen_org_mode_tags_indent, // Sub-screen
+                "prefs_screen_widget" to R.xml.prefs_screen_widget, // Sub-screen
                 "prefs_screen_app" to R.xml.prefs_screen_app
         )
 

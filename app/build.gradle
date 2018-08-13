@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 
 android {
     dexOptions {
@@ -14,14 +15,16 @@ android {
         minSdkVersion 16 // Jelly Bean (4.1)
         targetSdkVersion 27 // Oreo (8.1)
         applicationId "com.orgzly"
-        versionCode 95
-        versionName "1.6.2"
+        versionCode 109
+        versionName "1.6.8"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
         multiDexEnabled true
 
         buildConfigField "String", "DROPBOX_APP_KEY", gradle.ext.appProperties.getProperty("dropbox.app_key", '""')
         resValue "string", "dropbox_app_key_schema", gradle.ext.appProperties.getProperty("dropbox.app_key_schema", '')
+
+        buildConfigField "boolean", "IS_GIT_ENABLED", gradle.ext.appProperties.getProperty("git.enabled", 'false')
     }
 
     buildTypes {
@@ -84,6 +87,10 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+    }
 }
 
 // Warning:Conflict with dependency 'com.android.support:support-annotations'. Resolved versions for app (23.1.1) and test app (23.0.1) differ.
@@ -92,6 +99,9 @@ configurations.all {
     resolutionStrategy {
         force "com.android.support:design:$android_support_version"
     }
+
+    exclude module: 'httpclient'
+    exclude module: 'commons-logging'
 }
 
 dependencies {
@@ -108,8 +118,9 @@ dependencies {
     implementation "com.evernote:android-job:$evernote_android_job_version"
 
     implementation "joda-time:joda-time:$joda_time_version"
+    implementation "org.eclipse.jgit:org.eclipse.jgit:$jgit_version"
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "org.jetbrains:annotations:$jetbrains_annotations"
 
     implementation "com.android.support:multidex:$android_support_multidex_version"

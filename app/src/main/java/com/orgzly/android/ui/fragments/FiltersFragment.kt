@@ -20,7 +20,7 @@ import com.orgzly.android.provider.clients.FiltersClient
 import com.orgzly.android.ui.CommonActivity
 import com.orgzly.android.ui.Fab
 import com.orgzly.android.ui.FragmentListener
-import com.orgzly.android.ui.drawer.DrawerListed
+import com.orgzly.android.ui.drawer.DrawerItem
 import com.orgzly.android.ui.Loaders
 import com.orgzly.android.ui.util.ListViewUtils
 import com.orgzly.android.util.LogUtils
@@ -29,7 +29,7 @@ import java.io.IOException
 /**
  * Displays and allows modifying saved filters.
  */
-class FiltersFragment : ListFragment(), Fab, LoaderManager.LoaderCallbacks<Cursor>, DrawerListed {
+class FiltersFragment : ListFragment(), Fab, LoaderManager.LoaderCallbacks<Cursor>, DrawerItem {
 
     private var mListAdapter: SimpleCursorAdapter? = null
 
@@ -204,7 +204,8 @@ class FiltersFragment : ListFragment(), Fab, LoaderManager.LoaderCallbacks<Curso
     private fun announceChangesToActivity() {
         mListener?.announceChanges(
                 FRAGMENT_TAG,
-                getString(R.string.searches), null,
+                getString(R.string.searches),
+                null,
                 listView.checkedItemCount)
     }
 
@@ -309,11 +310,14 @@ class FiltersFragment : ListFragment(), Fab, LoaderManager.LoaderCallbacks<Curso
         private val TAG = FiltersFragment::class.java.name
 
         /** Name used for [android.app.FragmentManager].  */
+        @JvmStatic
         val FRAGMENT_TAG: String = FiltersFragment::class.java.name
 
+        @JvmStatic
         val instance: FiltersFragment
             get() = FiltersFragment()
 
+        @JvmStatic
         fun createFilterCursorAdapter(context: Context, layout: Int): SimpleCursorAdapter {
             /* Column field names to be bound. */
             val columns = arrayOf(ProviderContract.Filters.Param.NAME, ProviderContract.Filters.Param.QUERY)
@@ -325,6 +329,7 @@ class FiltersFragment : ListFragment(), Fab, LoaderManager.LoaderCallbacks<Curso
             return SimpleCursorAdapter(context, layout, null, columns, to, 0)
         }
 
+        @JvmStatic
         fun getDrawerItemId(): String {
             return TAG
         }

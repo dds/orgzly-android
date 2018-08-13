@@ -2,6 +2,7 @@ package com.orgzly.android.repos;
 
 import com.orgzly.android.Book;
 import com.orgzly.android.BookName;
+import com.orgzly.android.NotesExporter;
 import com.orgzly.android.OrgzlyTest;
 import com.orgzly.android.Shelf;
 import com.orgzly.android.util.MiscUtils;
@@ -49,11 +50,11 @@ public class LocalDbRepoTest extends OrgzlyTest {
         long now = System.currentTimeMillis();
 
         /* Write local book's content to a temporary file. */
-        Book book = shelf.getBook(1); // by bookId
+        Book book = shelf.getBook("local-book-1");
         File tmpFile = shelf.getTempBookFile();
 
         try {
-            shelf.writeBookToFile(book, BookName.Format.ORG, tmpFile);
+            NotesExporter.getInstance(context).exportBook(book, tmpFile);
             repo = RepoFactory.getFromUri(context, "mock://repo-a");
             repo.storeBook(tmpFile, BookName.fileName(book.getName(), BookName.Format.ORG));
         } finally {

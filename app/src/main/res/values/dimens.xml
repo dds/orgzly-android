@@ -1,17 +1,4 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <dimen name="padding_4">4dp</dimen>
-    <dimen name="padding_8">8dp</dimen>
-    <dimen name="padding_16">16dp</dimen>
-
-    <!-- Default screen margins, per the Android Design guidelines. -->
-    <dimen name="fragment_padding">16dp</dimen>
-    <!-- TODO: Remove these -->
-    <dimen name="fragment_horizontal_padding">16dp</dimen>
-    <dimen name="fragment_vertical_padding">16dp</dimen>
-
-    <dimen name="item_head_padding">6dp</dimen>
-
-    <dimen name="item_head_min_height">48dp</dimen>
     <dimen name="item_head_book_name_width">80dp</dimen>
 
     <dimen name="item_head_padding_comfortable">10dp</dimen>
@@ -31,12 +18,37 @@
          (http://developer.android.com/design/style/metrics-grids.html) -->
 
     <dimen name="ui_element_spacing">8dp</dimen>
-    <dimen name="item_head_book_preface_min_height">48dp</dimen>
-    <dimen name="fragment_note_body_edit_min_height">48dp</dimen>
 
     <dimen name="list_view_with_fab_bottom_padding">88dp</dimen>
+
     <dimen name="fab_margin">16dp</dimen>
 
+    <!-- Padding for sync button -->
+    <dimen name="design_navigation_padding_bottom" tools:override="true">64dp</dimen>
 
     <dimen name="design_navigation_icon_padding" tools:override="true">16dp</dimen>
+
+    <dimen name="bullet_inner_size">8dp</dimen>
+    <dimen name="bullet_inner_inset">8dp</dimen>
+    <dimen name="bullet_outer_inset">4dp</dimen>
+
+    <dimen name="content_left_margin_from_icon">32dp</dimen>
+    <dimen name="padded_content_left_margin_from_icon">30dp</dimen>
+
+    <dimen name="screen_edge">16dp</dimen>
+    <dimen name="screen_edge_minus_2dp">14dp</dimen>
+
+    <dimen name="space_between_content_areas">8dp</dimen>
+
+    <dimen name="fragment_note_field_min_width">200dp</dimen>
+
+    <dimen name="widget_title_text_size_14">14sp</dimen>
+    <dimen name="widget_post_title_text_size_14">12sp</dimen>
+    <dimen name="widget_header_text_size_14">17sp</dimen>
+
+    <dimen name="widget_title_text_size_16">16sp</dimen>
+    <dimen name="widget_post_title_text_size_16">14sp</dimen>
+    <dimen name="widget_header_text_size_16">17sp</dimen>
+
+    <dimen name="widget_padding">2dp</dimen>
 </resources>

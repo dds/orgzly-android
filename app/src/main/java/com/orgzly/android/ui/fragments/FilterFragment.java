@@ -20,11 +20,11 @@ import com.orgzly.R;
 import com.orgzly.android.filter.Filter;
 import com.orgzly.android.provider.clients.FiltersClient;
 import com.orgzly.android.ui.FragmentListener;
-import com.orgzly.android.ui.drawer.DrawerListed;
+import com.orgzly.android.ui.drawer.DrawerItem;
 import com.orgzly.android.ui.util.ActivityUtils;
 import com.orgzly.android.util.LogUtils;
 
-public class FilterFragment extends Fragment implements DrawerListed {
+public class FilterFragment extends Fragment implements DrawerItem {
     private static final String TAG = FilterFragment.class.getName();
 
     private static final String ARG_ID = "id";
@@ -96,7 +96,7 @@ public class FilterFragment extends Fragment implements DrawerListed {
         if (isEditingExistingFilter()) { /* Existing filter. */
             long id = getArguments().getLong(ARG_ID);
 
-            Filter filter = FiltersClient.INSTANCE.get(getActivity(), id);
+            Filter filter = FiltersClient.get(getActivity(), id);
 
             if (filter != null) {
                 mName.setText(filter.getName());
@@ -119,7 +119,7 @@ public class FilterFragment extends Fragment implements DrawerListed {
          * For new filters focus on name, for existing focus on query.
          */
         if (viewToFocus != null && getActivity() != null) {
-            ActivityUtils.INSTANCE.openSoftKeyboard(getActivity(), viewToFocus);
+            ActivityUtils.openSoftKeyboard(getActivity(), viewToFocus);
         }
     }
 
@@ -132,10 +132,12 @@ public class FilterFragment extends Fragment implements DrawerListed {
     }
 
     private void announceChangesToActivity() {
-        if (isEditingExistingFilter()) {
-            mListener.announceChanges(FRAGMENT_TAG, getString(R.string.search), null, 0);
-        } else {
-            mListener.announceChanges(FRAGMENT_TAG, getString(R.string.new_search), null, 0);
+        if (mListener != null) {
+            mListener.announceChanges(
+                    FRAGMENT_TAG,
+                    getString(isEditingExistingFilter() ? R.string.search : R.string.new_search),
+                    null,
+                    0);
         }
     }
 
@@ -253,7 +255,7 @@ public class FilterFragment extends Fragment implements DrawerListed {
      * Checks if filter with the same name (ignoring case) already exists.
      */
     private boolean sameNameFilterExists(String name) {
-        LongSparseArray<Filter> filters = FiltersClient.INSTANCE.getByNameIgnoreCase(getContext(), name);
+        LongSparseArray<Filter> filters = FiltersClient.getByNameIgnoreCase(getContext(), name);
 
         if (isEditingExistingFilter()) {
             long id = getArguments().getLong(ARG_ID);
@@ -278,7 +280,7 @@ public class FilterFragment extends Fragment implements DrawerListed {
 
     @Override
     public String getCurrentDrawerItemId() {
-        return FiltersFragment.Companion.getDrawerItemId();
+        return FiltersFragment.getDrawerItemId();
     }
 
     public interface FilterFragmentListener extends FragmentListener {

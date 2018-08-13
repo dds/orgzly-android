@@ -5,6 +5,7 @@ import android.util.Log;
 import com.orgzly.android.Book;
 import com.orgzly.android.BookName;
 import com.orgzly.android.LipsumBookGenerator;
+import com.orgzly.android.NotesExporter;
 import com.orgzly.android.OrgzlyTest;
 import com.orgzly.android.util.MiscUtils;
 
@@ -16,6 +17,7 @@ import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 public class BookParsingTest extends OrgzlyTest {
     private static final String TAG = BookParsingTest.class.getName();
@@ -45,37 +47,7 @@ public class BookParsingTest extends OrgzlyTest {
     }
 
     @Test
-    public void testBookContent1() throws IOException {
-        onBook("Sample book used for tests\n\n\n* Note")
-                .onLoad()
-                .isContent("Sample book used for tests")
-                .isNoteTitle(1, "Note")
-                .isNoteLevel(1, 1)
-                .isWhenSaved("Sample book used for tests\n\n* Note\n");
-    }
-
-    @Test
-    public void testBookContentPrefixedWithSpaces() {
-        onBook("  Sample book used for tests\n\n\n* Note")
-                .onLoad()
-                .isContent("  Sample book used for tests")
-                .isNoteTitle(1, "Note")
-                .isNoteLevel(1, 1)
-                .isWhenSaved("  Sample book used for tests\n\n* Note\n");
-    }
-
-    @Test
-    public void testBookContent2() throws IOException {
-        onBook("\nSample book used for tests\n\n\n* Note")
-                .onLoad()
-                .isContent("Sample book used for tests")
-                .isNoteTitle(1, "Note")
-                .isNoteLevel(1, 1)
-                .isWhenSaved("Sample book used for tests\n\n* Note\n");
-    }
-
-    @Test
-    public void testSavingWithPriorities() throws IOException {
+    public void testSavingWithPriorities() {
         onBook("\nSample book used for tests\n\n\n* Note 1\n* [#B] Note 2\n* [#A] Note 3")
                 .onLoad()
                 .isContent("Sample book used for tests")
@@ -83,38 +55,38 @@ public class BookParsingTest extends OrgzlyTest {
     }
 
     @Test
-    public void testNotIndented1() throws IOException {
+    public void testNotIndented1() {
         onBook("* Note 1\nSCHEDULED: <2015-02-11 Wed +1d>").onLoad()
                 .isWhenSaved("* Note 1\nSCHEDULED: <2015-02-11 Wed +1d>\n\n");
     }
 
     @Test
-    public void testNotIndented2() throws IOException {
+    public void testNotIndented2() {
         onBook("* Note 1\n:LOGBOOK:\n:END:").onLoad()
                 .isWhenSaved("* Note 1\n:LOGBOOK:\n:END:\n\n");
     }
 
     @Test
-    public void testIndented1() throws IOException {
+    public void testIndented1() {
         onBook("* Note 1\n  SCHEDULED: <2015-02-11 Wed +1d>").onLoad()
                 .isWhenSaved("* Note 1\n  SCHEDULED: <2015-02-11 Wed +1d>\n\n");
     }
 
     @Test
-    public void testIndented2() throws IOException {
+    public void testIndented2() {
         onBook("* Note 1\n  :LOGBOOK:\n  :END:").onLoad()
                 .isWhenSaved("* Note 1\n  :LOGBOOK:\n  :END:\n\n");
     }
 
     @Test
-    public void testEmptyProperties() throws IOException {
+    public void testEmptyProperties() {
         onBook("* Note 1\n  :PROPERTIES:\n  :END:").onLoad()
                 .isWhenSaved("* Note 1\n");
 
     }
 
     @Test
-    public void testProperties() throws IOException {
+    public void testProperties() {
         onBook("* Note 1\n" +
                "  :PROPERTIES:\n" +
                "  :name: value\n" +
@@ -126,7 +98,7 @@ public class BookParsingTest extends OrgzlyTest {
     }
 
     @Test
-    public void testPropertiesMultiple() throws IOException {
+    public void testPropertiesMultiple() {
         onBook("* Note 1\n" +
                "  :PROPERTIES:\n" +
                "  :name2: value2\n" +
@@ -140,7 +112,7 @@ public class BookParsingTest extends OrgzlyTest {
     }
 
     @Test
-    public void testPropertiesOrder() throws IOException {
+    public void testPropertiesOrder() {
         onBook("* Note 1\n" +
                "  :PROPERTIES:\n" +
                "  :LAST_REPEAT: [2017-04-03 Mon 10:26]\n" +
@@ -170,7 +142,7 @@ public class BookParsingTest extends OrgzlyTest {
     }
 
     @Test
-    public void testPropertiesEmpty() throws IOException {
+    public void testPropertiesEmpty() {
         onBook("* Note 1\n" +
                "  :PROPERTIES:\n" +
                "  :END:").onLoad()
@@ -195,20 +167,19 @@ public class BookParsingTest extends OrgzlyTest {
      */
 
     @Test
-    public void testLoadingTextDv() throws IOException {
+    public void testLoadingTextDv() {
         onBookFile("html/dv.org").onLoad().onGet();
     }
 
     @Test
-    public void testLoadingTextZh() throws IOException {
+    public void testLoadingTextZh() {
         onBookFile("html/zh.org").onLoad().onGet();
     }
 
     @Test
-    public void testLoadingHuge() throws IOException {
-        if (runResourcesDemandingTest()) {
-            onBookFile("org/large.org").onLoad();
-        }
+    public void testLoadingHuge() {
+        assumeTrue(runResourcesDemandingTest());
+        onBookFile("org/large.org").onLoad();
     }
 
     /*
@@ -216,42 +187,42 @@ public class BookParsingTest extends OrgzlyTest {
      */
 
     @Test
-    public void testLoadingArabicLipsum() throws IOException {
+    public void testLoadingArabicLipsum() {
         onBookFile("lipsum/Arabic-Lipsum.org").onLoad().onGet();
     }
 
     @Test
-    public void testLoadingChineseLipsum() throws IOException {
+    public void testLoadingChineseLipsum() {
         onBookFile("lipsum/Chinese-Lipsum.org").onLoad().onGet();
     }
 
     @Test
-    public void testLoadingGreekLipsum() throws IOException {
+    public void testLoadingGreekLipsum() {
         onBookFile("lipsum/Greek-Lipsum.org").onLoad().onGet();
     }
 
     @Test
-    public void testLoadingHebrewLipsum() throws IOException {
+    public void testLoadingHebrewLipsum() {
         onBookFile("lipsum/Hebrew-Lipsum.org").onLoad().onGet();
     }
 
     @Test
-    public void testLoadingHindiLipsum() throws IOException {
+    public void testLoadingHindiLipsum() {
         onBookFile("lipsum/Hindi-Lipsum.org").onLoad().onGet();
     }
 
     @Test
-    public void testLoadingJapaneseLipsum() throws IOException {
+    public void testLoadingJapaneseLipsum() {
         onBookFile("lipsum/Japanese-Lipsum.org").onLoad().onGet();
     }
 
     @Test
-    public void testLoadingL33TspeakLipsum() throws IOException {
+    public void testLoadingL33TspeakLipsum() {
         onBookFile("lipsum/L33tspeak-Lipsum.org").onLoad().onGet();
     }
 
     @Test
-    public void testLoadingRussianLipsum() throws IOException {
+    public void testLoadingRussianLipsum() {
         onBookFile("lipsum/Russian-Lipsum.org").onLoad().onGet();
     }
 
@@ -273,9 +244,8 @@ public class BookParsingTest extends OrgzlyTest {
 
     @Test
     public void testLion() {
-        if (runResourcesDemandingTest()) {
-            onBookFile("images/lion-wide.org").onLoad();
-        }
+        assumeTrue(runResourcesDemandingTest());
+        onBookFile("images/lion-wide.org").onLoad();
     }
 
     /*
@@ -284,42 +254,37 @@ public class BookParsingTest extends OrgzlyTest {
 
     @Test
     public void testLoadingLatinLipsumHugeBookContentWithTitleTitleAndNoteContent() {
-        if (runResourcesDemandingTest()) {
-            String data = LipsumBookGenerator.generateOrgString(1000000, new int[] { 1000000, 1000000 });
-            onBook(data).onLoadFailed();
-        }
+        assumeTrue(runResourcesDemandingTest());
+        String data = LipsumBookGenerator.generateOrgString(1000000, new int[] { 1000000, 1000000 });
+        onBook(data).onLoadFailed();
     }
 
     @Test
     public void testLoadingLatinLipsumHugeNoteTitle() {
-        if (runResourcesDemandingTest()) {
-            String data = LipsumBookGenerator.generateOrgString(0, new int[] { 2000000, 0 });
-            onBook(data).onLoadFailed();
-        }
+        assumeTrue(runResourcesDemandingTest());
+        String data = LipsumBookGenerator.generateOrgString(0, new int[] { 2000000, 0 });
+        onBook(data).onLoadFailed();
     }
 
     @Test
     public void testLoadingLatinLipsumLargeNoteTitles() {
-        if (runResourcesDemandingTest()) {
-            String data = LipsumBookGenerator.generateOrgString(0, new int[] { 1000000, 0, 1500000, 1 });
-            onBook(data).onLoad();
-        }
+        assumeTrue(runResourcesDemandingTest());
+        String data = LipsumBookGenerator.generateOrgString(0, new int[] { 1000000, 0, 1500000, 1 });
+        onBook(data).onLoad();
     }
 
     @Test
     public void testLoadingLatinLipsumHugeNoteTitleWithContent() {
-        if (runResourcesDemandingTest()) {
-            String data = LipsumBookGenerator.generateOrgString(0, new int[] { 1000000, 1000000 });
-            onBook(data).onLoadFailed();
-        }
+        assumeTrue(runResourcesDemandingTest());
+        String data = LipsumBookGenerator.generateOrgString(0, new int[] { 1000000, 1000000 });
+        onBook(data).onLoadFailed();
     }
 
     @Test
     public void testBookContentTooBig() {
-        if (runResourcesDemandingTest()) {
-            String data = LipsumBookGenerator.generateOrgString(2000000, null);
-            onBook(data).onLoadFailed();
-        }
+        assumeTrue(runResourcesDemandingTest());
+        String data = LipsumBookGenerator.generateOrgString(2000000, null);
+        onBook(data).onLoadFailed();
     }
 
     public TestedBook onBookFile(String resourceName) {
@@ -411,20 +376,6 @@ public class BookParsingTest extends OrgzlyTest {
             return this;
         }
 
-        public TestedBook isNoteTitle(int note, String str) {
-            if (book == null) fail("Notebook not loaded. Call onLoad()");
-
-            assertEquals("Title", str, shelf.getNote(note).getHead().getTitle());
-            return this;
-        }
-
-        public TestedBook isNoteLevel(int note, int level) {
-            if (book == null) fail("Notebook not loaded. Call onLoad()");
-
-            assertEquals("Note level", level, shelf.getNote(note).getPosition().getLevel());
-            return this;
-        }
-
         public TestedBook isWhenSaved(String expacted) {
             if (book == null) fail("Notebook not loaded. Call onLoad()");
 
@@ -432,7 +383,7 @@ public class BookParsingTest extends OrgzlyTest {
                 /* Write from db -> temp file. */
                 File file = shelf.getTempBookFile();
                 try {
-                    shelf.writeBookToFile(book, BookName.Format.ORG, file);
+                    NotesExporter.getInstance(context).exportBook(book, file);
                     assertEquals("Notebook", expacted, MiscUtils.readStringFromFile(file));
                 } finally {
                     file.delete();

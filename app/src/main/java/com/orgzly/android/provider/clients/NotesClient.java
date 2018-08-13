@@ -185,7 +185,7 @@ public class NotesClient {
         OrgHead head = new OrgHead();
 
         String state = cursor.getString(cursor.getColumnIndex(DbNoteView.STATE));
-        if (NoteStates.Companion.isKeyword(state)) {
+        if (NoteStates.isKeyword(state)) {
             head.setState(state);
         } else {
             head.setState(null);
@@ -275,6 +275,42 @@ public class NotesClient {
         return result[0].count;
     }
 
+    public static int updateContent(Context context, long bookId, long noteId, String content) {
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+
+        ContentValues values = new ContentValues();
+        values.put(DbNote.CONTENT, content);
+
+        // Update content
+        ops.add(ContentProviderOperation
+                .newUpdate(ProviderContract.Notes.ContentUri.notes())
+                .withValues(values)
+                .withSelection(DbNote._ID + " = " + noteId, null)
+                .build()
+        );
+
+        // Update book's modification time
+        ops.add(ContentProviderOperation
+                .newUpdate(ProviderContract.Books.ContentUri.books())
+                .withValue(DbBook.MTIME, System.currentTimeMillis())
+                .withSelection(DbBook._ID + " = " + bookId, null)
+                .build());
+
+        ContentProviderResult[] result;
+
+        try {
+            result = context.getContentResolver().applyBatch(ProviderContract.AUTHORITY, ops);
+        } catch (RemoteException | OperationApplicationException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+
+        return result[0].count;
+    }
+
+    public static Note create(Context context, Note note) {
+        return create(context, note, null, note.getCreatedAt());
+    }
 
     /**
      * Insert as last note if position is not specified.
@@ -444,6 +480,17 @@ public class NotesClient {
                 return fromCursor(cursor, withExtras);
             } else {
                 throw new NoSuchElementException("Note with title " + title + " was not found in " + ProviderContract.Notes.ContentUri.notes());
+            }
+        }
+    }
+
+    public static Note getRootNode(Context context, long bookId) {
+        try (Cursor cursor = context.getContentResolver().query(
+                ProviderContract.Notes.ContentUri.notes(), null, DbNoteView.BOOK_ID + "=" + bookId + " AND " + DbNoteView.LEVEL + "= 0", null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                return fromCursor(cursor, false);
+            } else {
+                throw new IllegalStateException("Book " + bookId + " has no root node");
             }
         }
     }
@@ -650,6 +697,14 @@ public class NotesClient {
     }
 
     public static void updateScheduledTime(Context context, Set<Long> noteIds, OrgDateTime time) {
+        updatePlanningTime(context, noteIds, time, ProviderContract.Notes.UpdateParam.SCHEDULED_STRING);
+    }
+
+    public static void updateDeadlineTime(Context context, Set<Long> noteIds, OrgDateTime time) {
+        updatePlanningTime(context, noteIds, time, ProviderContract.Notes.UpdateParam.DEADLINE_STRING);
+    }
+
+    private static void updatePlanningTime(Context context, Set<Long> noteIds, OrgDateTime time, String key) {
         ArrayList<ContentProviderOperation> ops = new ArrayList<>();
 
         String noteIdsCommaSeparated = TextUtils.join(",", noteIds);
@@ -658,9 +713,9 @@ public class NotesClient {
         ContentValues values = new ContentValues();
 
         if (time != null) {
-            values.put(ProviderContract.Notes.UpdateParam.SCHEDULED_STRING, new OrgRange(time).toString());
+            values.put(key, new OrgRange(time).toString());
         } else {
-            values.putNull(ProviderContract.Notes.UpdateParam.SCHEDULED_STRING);
+            values.putNull(key);
         }
 
         ops.add(ContentProviderOperation

@@ -2,9 +2,11 @@ package com.orgzly.android.ui.fragments;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
@@ -23,11 +25,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import com.orgzly.BuildConfig;
 import com.orgzly.R;
+import com.orgzly.android.ActionService;
+import com.orgzly.android.AppIntent;
 import com.orgzly.android.Book;
 import com.orgzly.android.BookUtils;
 import com.orgzly.android.prefs.AppPreferences;
@@ -43,13 +46,13 @@ import com.orgzly.android.ui.Place;
 import com.orgzly.android.ui.Selection;
 import com.orgzly.android.ui.SelectionUtils;
 import com.orgzly.android.ui.dialogs.TimestampDialogFragment;
-import com.orgzly.android.ui.drawer.DrawerListed;
+import com.orgzly.android.ui.drawer.DrawerItem;
 import com.orgzly.android.ui.views.GesturedListView;
+import com.orgzly.android.ui.views.TextViewWithMarkup;
 import com.orgzly.android.util.LogUtils;
 import com.orgzly.android.util.MiscUtils;
-import com.orgzly.android.util.OrgFormatter;
-import com.orgzly.org.datetime.OrgDateTime;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -62,7 +65,7 @@ public class BookFragment extends NoteListFragment
         Fab,
         TimestampDialogFragment.OnDateTimeSetListener,
         LoaderManager.LoaderCallbacks<Cursor>,
-        DrawerListed {
+        DrawerItem {
 
     private static final String TAG = BookFragment.class.getName();
 
@@ -77,7 +80,8 @@ public class BookFragment extends NoteListFragment
             R.id.book_cab_new,
             R.id.book_cab_cut,
             R.id.book_cab_paste,
-            R.id.book_cab_move
+            R.id.book_cab_move,
+            R.id.book_cab_refile
     };
 
     private BookFragmentListener listener;
@@ -89,7 +93,7 @@ public class BookFragment extends NoteListFragment
     private static long mLastBookId;
 
     private View mHeader;
-    private TextView mPrefaceText;
+    private TextViewWithMarkup mPrefaceText;
     private View mNoNotesText;
 
     private SimpleCursorAdapter mListAdapter;
@@ -192,14 +196,24 @@ public class BookFragment extends NoteListFragment
 
         View view = inflater.inflate(R.layout.fragment_book, container, false);
 
-        final ListView listView = (ListView) view.findViewById(android.R.id.list);
-        // setupGestureDetector(listView);
+        final ListView listView = view.findViewById(android.R.id.list);
+
         mHeader = inflater.inflate(R.layout.item_head_book_preface, listView, false);
 
-        mPrefaceText = (TextView) mHeader.findViewById(R.id.fragment_book_header_text);
+        mPrefaceText = mHeader.findViewById(R.id.fragment_book_header_text);
         if (getActivity() != null && AppPreferences.isFontMonospaced(getContext())) {
             mPrefaceText.setTypeface(Typeface.MONOSPACE);
         }
+
+        /* If preface changes (for example by toggling the checkbox), update it. */
+        mPrefaceText.setUserTextChangedListener(() ->
+                ActionService.Companion.enqueueWork(
+                        getActivity(),
+                        new Intent(getActivity(), ActionService.class)
+                                .setAction(AppIntent.ACTION_UPDATE_BOOK)
+                                .putExtra(AppIntent.EXTRA_BOOK_ID, mBookId)
+                                .putExtra(AppIntent.EXTRA_BOOK_PREFACE, mPrefaceText.getRawText())));
+
 
         mViewFlipper = (ViewFlipper) view.findViewById(R.id.fragment_book_view_flipper);
 
@@ -255,6 +269,10 @@ public class BookFragment extends NoteListFragment
                             listener.onNoteNewRequest(new NotePlace(mBookId, noteId, Place.BELOW));
                             break;
 
+                        case R.id.item_menu_refile_btn:
+                            openNoteRefileDialog(listener, mBookId, Collections.singleton(noteId));
+                            break;
+
                         default:
                             onButtonClick(listener, itemView, buttonId, noteId);
                     }
@@ -280,6 +298,10 @@ public class BookFragment extends NoteListFragment
         /* Reset from ids will be performed after loading the data. */
     }
 
+    @Override
+    public NoteListFragmentListener getListener() {
+        return listener;
+    }
 
     @Override
     public void onPause() {
@@ -402,35 +424,6 @@ public class BookFragment extends NoteListFragment
         }
     }
 
-    @Override
-    public void onDateTimeSet(int id, TreeSet<Long> noteIds, OrgDateTime time) {
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, id, time);
-
-        switch (id) {
-            case R.id.book_cab_schedule:
-            case R.id.item_menu_schedule_btn:
-                listener.onScheduledTimeUpdateRequest(noteIds, time);
-                break;
-        }
-    }
-
-    @Override
-    public void onDateTimeCleared(int id, TreeSet<Long> noteIds) {
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, id);
-
-        switch (id) {
-            case R.id.book_cab_schedule:
-            case R.id.item_menu_schedule_btn:
-                listener.onScheduledTimeUpdateRequest(noteIds,  null);
-                break;
-        }
-    }
-
-    @Override
-    public void onDateTimeAborted(int id, TreeSet<Long> noteIds) {
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, id);
-    }
-
    /*
     * Actions
     */
@@ -465,6 +458,8 @@ public class BookFragment extends NoteListFragment
     }
 
     private void scrollToNoteIfSet() {
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG);
+
         long noteId = getArguments().getLong(ARG_NOTE_ID, 0);
 
         if (noteId > 0) {
@@ -477,7 +472,7 @@ public class BookFragment extends NoteListFragment
                     scrollToCursorPosition(i);
 
                     /* Make sure we don't scroll again (for example after configuration change). */
-                    getArguments().remove(ARG_NOTE_ID);
+                    new Handler().postDelayed(() -> getArguments().remove(ARG_NOTE_ID), 500);
 
                     break;
                 }
@@ -501,11 +496,6 @@ public class BookFragment extends NoteListFragment
 
     public Book getBook() {
         return mBook;
-    }
-
-    @Override
-    public String getFragmentTag() {
-        return FRAGMENT_TAG;
     }
 
     @Override
@@ -633,7 +623,7 @@ public class BookFragment extends NoteListFragment
                 mPrefaceText.setEllipsize(null);
             }
 
-            mPrefaceText.setText(OrgFormatter.INSTANCE.parse(mBook.getPreface(), getContext()));
+            mPrefaceText.setRawText(mBook.getPreface());
 
         } else {
             // Remove header
@@ -653,7 +643,7 @@ public class BookFragment extends NoteListFragment
     private void notesLoaded(Cursor cursor) {
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, cursor);
 
-        SelectionUtils.INSTANCE.removeNonExistingIdsFromSelection(mSelection, cursor);
+        SelectionUtils.removeNonExistingIdsFromSelection(mSelection, cursor);
 
         mListAdapter.swapCursor(cursor);
 
@@ -789,14 +779,14 @@ public class BookFragment extends NoteListFragment
                     break;
 
                 case R.id.book_cab_schedule:
-                    displayScheduleTimestampDialog(R.id.book_cab_schedule, mSelection.getIds());
+                case R.id.book_cab_deadline:
+                    displayTimestampDialog(menuItem.getItemId(), mSelection.getIds());
                     break;
 
                 case R.id.book_cab_cut:
                 case R.id.book_cab_delete_note:
                     /* Get currently selected notes' IDs. */
-                    TreeSet<Long> ids = new TreeSet<>();
-                    ids.addAll(mSelection.getIds());
+                    TreeSet<Long> ids = new TreeSet<>(mSelection.getIds());
 
                     if (menuItem.getItemId() == R.id.book_cab_cut) {
                         listener.onNotesCutRequest(mBookId, ids);
@@ -819,6 +809,10 @@ public class BookFragment extends NoteListFragment
                 case R.id.book_cab_paste_above:
                     pasteNotes(Place.ABOVE);
                     actionMode.finish(); /* Close action mode. */
+                    break;
+
+                case R.id.book_cab_refile:
+                    openNoteRefileDialog(listener, mBookId, mSelection.getIds());
                     break;
 
                 case R.id.book_cab_paste_under:
@@ -884,6 +878,7 @@ public class BookFragment extends NoteListFragment
         void onNotesPromoteRequest(long bookId, Set<Long> noteIds);
         void onNotesDemoteRequest(long bookId, Set<Long> noteIds);
         void onNotesMoveRequest(long bookId, long noteId, int offset);
+        void onNotesRefileRequest(long sourceBookId, Set<Long> noteIds, long targetBookId);
 
         void onCycleVisibilityRequest(Book book);
     }

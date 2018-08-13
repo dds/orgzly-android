@@ -18,6 +18,7 @@ import com.orgzly.R;
 import com.orgzly.android.AppIntent;
 import com.orgzly.android.filter.Filter;
 import com.orgzly.android.Shelf;
+import com.orgzly.android.prefs.AppPreferences;
 import com.orgzly.android.provider.clients.FiltersClient;
 import com.orgzly.android.ui.MainActivity;
 import com.orgzly.android.ui.ShareActivity;
@@ -39,7 +40,7 @@ public class ListWidgetProvider extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "onUpdate");
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG);
 
         for (int appWidgetId : appWidgetIds) {
             updateAppWidgetLayout(context, appWidgetManager, appWidgetId);
@@ -47,9 +48,13 @@ public class ListWidgetProvider extends AppWidgetProvider {
     }
 
     private static void updateAppWidgetLayout(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG);
+
         Filter filter = getFilter(context, appWidgetId);
 
         RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.list_widget);
+
+        WidgetStyle.updateWidget(remoteViews, context);
 
         Intent serviceIntent = new Intent(context, ListWidgetService.class);
         serviceIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
@@ -97,7 +102,7 @@ public class ListWidgetProvider extends AppWidgetProvider {
     }
 
     private static void updateAppWidgetLayouts(Context context) {
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "updateAppWidgetLayouts");
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG);
 
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
 
@@ -106,6 +111,8 @@ public class ListWidgetProvider extends AppWidgetProvider {
         for (int appWidgetId : appWidgetIds) {
             updateAppWidgetLayout(context, appWidgetManager, appWidgetId);
         }
+
+        scheduleUpdate(context);
     }
 
     private static void updateListContents(Context context) {
@@ -145,16 +152,29 @@ public class ListWidgetProvider extends AppWidgetProvider {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
         PendingIntent intent = getAlarmIntent(context);
+
         alarmManager.cancel(intent);
 
-        /* repeat after every full hour because results of search can change on new day
-            because of timezones repeat every hour instead of every day */
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.add(Calendar.HOUR_OF_DAY, 1);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 1);
-        alarmManager.setInexactRepeating(AlarmManager.RTC, calendar.getTimeInMillis(), AlarmManager.INTERVAL_HOUR, intent);
+        int intervalMin = AppPreferences.widgetUpdateFrequency(context);
+        long intervalMillis = intervalMin * 60 * 1000;
+
+        long now = System.currentTimeMillis();
+        Calendar triggerAt = Calendar.getInstance();
+        triggerAt.setTimeInMillis(now);
+        triggerAt.set(Calendar.MILLISECOND, 1);
+        triggerAt.set(Calendar.SECOND, 0);
+        triggerAt.set(Calendar.MINUTE, 0);
+        do {
+            triggerAt.add(Calendar.MINUTE, intervalMin);
+        } while (triggerAt.getTimeInMillis() < now);
+
+        alarmManager.setInexactRepeating(
+                AlarmManager.RTC,
+                triggerAt.getTimeInMillis(),
+                intervalMillis,
+                intent);
+
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, triggerAt.getTimeInMillis(), intervalMillis);
     }
 
     private static void clearUpdate(Context context) {
@@ -186,7 +206,7 @@ public class ListWidgetProvider extends AppWidgetProvider {
         long filterId = context.getSharedPreferences(PREFERENCES_ID, Context.MODE_PRIVATE).getLong(getFilterPreferenceKey(appWidgetId), -1);
         Filter filter = null;
         if (filterId != -1) {
-            filter = FiltersClient.INSTANCE.get(context, filterId);
+            filter = FiltersClient.get(context, filterId);
         }
 
         if (filter == null) {
@@ -223,7 +243,7 @@ public class ListWidgetProvider extends AppWidgetProvider {
         long noteId = intent.getLongExtra(AppIntent.EXTRA_NOTE_ID, 0L);
         long bookId = intent.getLongExtra(AppIntent.EXTRA_BOOK_ID, 0L);
 
-        PendingIntent pi = ActivityUtils.INSTANCE.mainActivityPendingIntent(context, bookId, noteId);
+        PendingIntent pi = ActivityUtils.mainActivityPendingIntent(context, bookId, noteId);
         try {
             pi.send();
         } catch (PendingIntent.CanceledException e) {

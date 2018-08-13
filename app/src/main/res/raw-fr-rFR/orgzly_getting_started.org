@@ -1,71 +1,79 @@
-Welcome to Orgzly!
+Bienvenue dans Orgzly!
 
 * Notes
-** Click on the note to open it
-** Click and hold the note to select it
+** Cliquez sur la note pour l’ouvrir
+** Cliquez et appuyez la note pour la sélectionner
 
-You can select multiple notes.
+Vous pouvez sélectionner plusieurs notes.
 
-** Fling note right to open its quick-menu
+** Appuyez et glissez rapidement vers la droite pour ouvrir le menu rapide
 
-Fling it left to open a different menu.
+** Appuyez et glissez rapidement vers la gauche pour ouvrir un menu différent.
 
-** Fold a note which contains sub-notes by clicking the icon next to it
-*** There is no limit in number of levels you can have
-**** Use this to better organize your notes
+** Ouvrez une note qui contient des sous-notes en cliquant sur l'icône voisine
+*** Il n’y a pas de limite au nombre de niveaux que vous pouvez avoir
+**** Vous pouvez utiliser ça pour mieux organiser vos notes
 
-** Note can have tags :tag1:tag2:
-*** Sub-note inherits the tags :tag3:
+** Les notes peuvent avoir des étiquettes :tag1:tag2:
+*** Les sous-notes héritent des étiquettes parentes :tag3:
 
-If you search for notes with tag “tag1”, this note will be returned as well.
+Si vous recherchez des notes avec l'étiquette « tag1 », cette note sera également retournée.
 
-** TODO Note can have a state
+** TODO Les notes peuvent avoir un état
 
-You can configure any number of states to use: TODO, NEXT, DONE, etc.
+Vous pouvez configurer tous les états que vous souhaitez : TODO, NEXT, DONE, etc.
 
-*** There are two /types/ of states: to-do and done
+*** Il y a deux /types/ d'état : à faire et terminé
 
-*** DONE This is a note with /done/ type of state
-CLOSED: [2018-01-24 Wed 17:00]
+*** DONE C'est une note avec un type d'état /fait/
+CLOSED: [2018-01-24 Mer 17:00]
 
-** Note can have a scheduled time
-SCHEDULED: <2015-02-20 Fri 15:15>
+** La note peut avoir une date de début programmée
+SCHEDULED: <2015-02-20 Ven 15:15>
 
-*** Times can have a repeater
-SCHEDULED: <2015-02-16 Mon .+1d>
+*** L'horaire peut avoir un répetiteur
+SCHEDULED: <2015-02-16 Lun .+1d>
 
-** You can also set a deadline time
+** Vous pouvez également définir une échéance
 DEADLINE: <2015-02-20 Fri>
 
-** Note can use links
+** Les notes peuvent utiliser des liens
 
-Dial a phone number (tel:555-2368) or [[sms:555-2368][send SMS]].
+Vous pouvez composer un numéro de téléphone (tel:0123456789) ou [[sms:0623456789][envoyer un SMS]].
 
-Send email to [[mailto:support@orgzly.com][support@orgzly.com]], visit http://www.orgzly.com or read [[http://www.orgzly.com/help][documentation]].
+Vous pouvez également envoyer un courriel [[mailto:support@orgzly.com][support@orgzly.com]], visiter http://www.orgzly.com ou lire la [[http://www.orgzly.com/help][documentation]].
 
-** Basic typographical emphasis is supported
+** Un formatage de base est supporté
 
-You can make words *bold*, /italic/, _underlined_, =verbatim=, ~code~ and +strike-through+.
+Vous pouvez mettre les mots en *gras*, /italique/, _souligné_, =verbatim=, ~en code~ ou les +biffer+.
 
-* Search
-** There are many search operators supported
+** Checkbox list is available
 
-You can search notes by state, tag, scheduled or deadline time etc.
+- [X] Task 1
+- [ ] Task 2
+- [ ] Task 3
 
-See http://www.orgzly.com/help#search to learn more.
+Click the checkbox to toggle it. Press new-line button at the end of the line to create a new item.
 
-** Search queries can be saved for quick access
+* Recherche
+** Il y a beaucoup d’opérateurs de recherche supportés
 
-Try sample searches from navigation drawer and note the queries they use.
+Vous pouvez rechercher des notes par état, étiquette, planification, échéance, etc.
 
-You can create your own saved searches by clicking on “Searches” in the navigation drawer.
+Voir http://www.orgzly.com/help#search pour en savoir plus.
 
-* Syncing
+** Les recherches peuvent être enregistrées pour un accès rapide
 
-** Notebooks can be saved as plain-text files
+Essayez les exemples de recherche du menu et notez les requêtes qu’elles utilisent.
 
-Files are in the format used by “Org mode”.
+Vous pouvez créer vos propres recherches enregistrées en cliquant sur « Recherche » dans le menu de navigation.
 
-** Location (repository) type
+* Synchronisation
 
-You can keep notebooks synced with a directory on your mobile device, SD card or Dropbox.
+** Les bloc-notes peuvent être enregistrés comme de simples fichiers de texte
+
+Les fichiers suivent les règles de formatage « Org mode ».
+
+** Emplacements des dépôts
+
+Vous pouvez garder les bloc-notes synchronisés avec un dossier de votre appareil, sur une carte mémoire SD ou avec Dropbox.

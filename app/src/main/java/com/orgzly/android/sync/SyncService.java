@@ -8,6 +8,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
@@ -40,9 +41,21 @@ public class SyncService extends Service {
     private final IBinder binder = new LocalBinder();
 
 
+    public static void start(Context context, Intent intent) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
+    }
+
     @Override
     public void onCreate() {
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG);
+
+        startForeground(
+                Notifications.SYNC_IN_PROGRESS,
+                Notifications.createSyncInProgressNotification(getApplicationContext()));
 
         shelf = new Shelf(this);
 
@@ -58,11 +71,15 @@ public class SyncService extends Service {
         if (intent != null && AppIntent.ACTION_SYNC_START.equals(intent.getAction())) {
             if (!isRunning()) {
                 start(isTriggeredAutomatically);
+            } else {
+                stopSelf();
             }
 
         } else if (intent != null && AppIntent.ACTION_SYNC_STOP.equals(intent.getAction())) {
             if (isRunning()) {
                 stop();
+            } else {
+                stopSelf();
             }
 
         } else {
@@ -180,12 +197,6 @@ public class SyncService extends Service {
 
             Notifications.ensureSyncNotificationSetup(context);
 
-            // Always run in foreground (since Oreo, before possibly switching to scheduled job)
-            startForeground(
-                    Notifications.SYNC_IN_PROGRESS,
-                    Notifications.createSyncInProgressNotification(getApplicationContext()));
-
-
             /* There are no repositories configured. */
             if (repos.size() == 0) {
                 status.set(SyncStatus.Type.FAILED, getString(R.string.no_repos_configured), 0, 0);
@@ -204,7 +215,7 @@ public class SyncService extends Service {
              * if there are repositories that would use it.
              */
             if (reposRequireStoragePermission(repos.values())) {
-                if (!AppPermissions.INSTANCE.isGranted(context, AppPermissions.Usage.SYNC_START)) {
+                if (!AppPermissions.isGranted(context, AppPermissions.Usage.SYNC_START)) {
                     status.set(SyncStatus.Type.NO_STORAGE_PERMISSION, null, 0, 0);
                     announceActiveSyncStatus();
                     return null;

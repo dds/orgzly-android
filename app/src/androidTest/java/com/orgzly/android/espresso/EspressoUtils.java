@@ -8,14 +8,21 @@ import android.support.test.espresso.UiController;
 import android.support.test.espresso.ViewAction;
 import android.support.test.espresso.ViewInteraction;
 import android.support.test.espresso.action.CloseKeyboardAction;
+import android.support.test.espresso.matcher.PreferenceMatchers;
+import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.rule.ActivityTestRule;
+import android.text.Spanned;
+import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.NumberPicker;
+import android.widget.TextView;
 
 import com.orgzly.R;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 
 import static android.support.test.espresso.Espresso.onData;
@@ -48,34 +55,6 @@ import static org.hamcrest.Matchers.not;
  * - replaceText() is preferred over typeText() as it is much faster.
  */
 class EspressoUtils {
-    static final int[] SETTINGS_REVERSED_NOTE_CLICK_ACTION = { 0, 0 };
-
-    static final int[] SETTINGS_DISPLAY_CONTENT = { 1, 10 };
-    static final int[] SETTINGS_STATE_KEYWORDS = { 1, 16 };
-    static final int[] SETTINGS_DEFAULT_PRIORITY = { 1, 17 };
-    static final int[] SETTINGS_LOWEST_PRIORITY = { 1, 18 };
-    static final int[] SETTINGS_NEW_NOTE_STATE = { 1, 20 };
-
-    static final int[] SETTINGS_REPOS = { 4, 0 };
-    static final int[] SETTINGS_AUTO_SYNC_TOGGLE = { 4, 1, 1 };
-    static final int[] SETTINGS_AUTO_SYNC_NOTE_CREATED = { 4, 1, 2 };
-    static final int[] SETTINGS_CREATED_AT = { 4, 3 };
-    static final int[] SETTINGS_CREATED_AT_PROPERTY = { 4, 4 };
-
-    static final int[] IMPORT_GETTING_STARTED = { 5, 0 };
-    static final int[] SETTINGS_CLEAR_DATABASE = { 5, 1 };
-
-
-    static void tapToSetting(int[] setting) {
-        for (int s: setting) {
-            onListItem(s).perform(click());
-        }
-    }
-
-    static void tapLastSetting(int[] setting) {
-        onListItem(setting[setting.length-1]).perform(click());
-    }
-
     static ViewInteraction onList() {
         return onView(allOf(isAssignableFrom(ListView.class), isDisplayed()));
     }
@@ -175,7 +154,8 @@ class EspressoUtils {
     private static void settingsSetKeywords(int viewId, String keywords) {
         onActionItemClick(R.id.activity_action_settings, R.string.settings);
 
-        EspressoUtils.tapToSetting(EspressoUtils.SETTINGS_STATE_KEYWORDS);
+        onData(PreferenceMatchers.withTitle(R.string.pref_title_notebooks)).perform(click());
+        onData(PreferenceMatchers.withTitle(R.string.states)).perform(click());
 
         onView(withId(viewId)).perform(replaceText(keywords), closeSoftKeyboardWithDelay());
         onView(withText(R.string.ok)).perform(click());
@@ -195,9 +175,6 @@ class EspressoUtils {
     static void searchForText(String str) {
         onView(allOf(withId(R.id.activity_action_search), isDisplayed())).perform(click());
         onView(withHint(R.string.search_hint)).perform(replaceText(str), pressKey(66));
-
-        /* TODO: Ugh. */
-        SystemClock.sleep(300);
     }
 
     /**
@@ -248,6 +225,66 @@ class EspressoUtils {
             @Override
             public void describeTo(Description description) {
                 description.appendText("a View which is highlighted");
+            }
+        };
+    }
+
+    public static ViewAction setNumber(final int num) {
+        return new ViewAction() {
+            @Override
+            public void perform(UiController uiController, View view) {
+                NumberPicker np = (NumberPicker) view;
+                np.setValue(num);
+
+            }
+
+            @Override
+            public String getDescription() {
+                return "Set the passed number into the NumberPicker";
+            }
+
+            @Override
+            public Matcher<View> getConstraints() {
+                return ViewMatchers.isAssignableFrom(NumberPicker.class);
+            }
+        };
+    }
+
+    public static ViewAction clickClickableSpan(final CharSequence textToClick) {
+        return new ViewAction() {
+            @Override
+            public Matcher<View> getConstraints() {
+                return Matchers.instanceOf(TextView.class);
+            }
+
+            @Override
+            public String getDescription() {
+                return "Click text";
+            }
+
+            @Override
+            public void perform(UiController uiController, View view) {
+                TextView textView = (TextView) view;
+                Spanned spannableString = (Spanned) textView.getText();
+
+                // Get the links inside the TextView and check if we find textToClick
+                ClickableSpan[] spans = spannableString.getSpans(0, spannableString.length(), ClickableSpan.class);
+                if (spans.length > 0) {
+                    ClickableSpan spanCandidate;
+                    for (ClickableSpan span : spans) {
+                        spanCandidate = span;
+                        int start = spannableString.getSpanStart(spanCandidate);
+                        int end = spannableString.getSpanEnd(spanCandidate);
+                        CharSequence sequence = spannableString.subSequence(start, end);
+                        if (textToClick.toString().equals(sequence.toString())) {
+                            span.onClick(textView);
+                            return;
+                        }
+                    }
+                }
+
+                // Fall-back to just click the entire view
+                click().perform(uiController, view);
             }
         };
     }

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.orgzly">
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.orgzly"
+    android:installLocation="auto">
 
     <!-- Initially added for Dropbox sync. -->
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -58,7 +62,27 @@
         </activity>
 
         <activity
-            android:name="com.orgzly.android.ui.ReposActivity"
+            android:name=".android.ui.repos.ReposActivity"
+            android:windowSoftInputMode="stateAlwaysHidden">
+        </activity>
+
+        <activity
+            android:name=".android.ui.repos.DropboxRepoActivity"
+            android:windowSoftInputMode="stateAlwaysHidden">
+        </activity>
+
+        <activity
+            android:name=".android.ui.repos.GitRepoActivity"
+            android:windowSoftInputMode="stateAlwaysHidden">
+        </activity>
+
+        <activity
+            android:name=".android.ui.repos.DirectoryRepoActivity"
+            android:windowSoftInputMode="stateAlwaysHidden">
+        </activity>
+
+        <activity
+            android:name=".android.ui.repos.BrowserActivity"
             android:windowSoftInputMode="stateAlwaysHidden">
         </activity>
 
@@ -141,5 +165,12 @@
 
         <receiver
             android:name=".android.NotificationBroadcastReceiver"/>
+
+        <receiver android:name=".android.NewNoteBroadcastReceiver"/>
+
+        <receiver
+            android:name=".android.ActionReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver" />
     </application>
 </manifest>

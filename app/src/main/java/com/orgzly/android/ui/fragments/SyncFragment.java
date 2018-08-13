@@ -37,7 +37,6 @@ import com.orgzly.android.filter.Filter;
 import com.orgzly.android.prefs.AppPreferences;
 import com.orgzly.android.provider.clients.BooksClient;
 import com.orgzly.android.repos.Repo;
-import com.orgzly.android.repos.Rook;
 import com.orgzly.android.sync.SyncStatus;
 import com.orgzly.android.ui.CommonActivity;
 import com.orgzly.android.ui.NotePlace;
@@ -98,7 +97,7 @@ public class SyncFragment extends Fragment {
                 case NO_STORAGE_PERMISSION:
                     Activity activity = getActivity();
                     if (activity != null) {
-                        AppPermissions.INSTANCE.isGrantedOrRequest((CommonActivity) activity, AppPermissions.Usage.SYNC_START);
+                        AppPermissions.isGrantedOrRequest((CommonActivity) activity, AppPermissions.Usage.SYNC_START);
                     }
                     break;
 
@@ -217,7 +216,7 @@ public class SyncFragment extends Fragment {
             @Override
             protected Object doInBackground(Void ... params) { /* Executing on a different thread. */
                 try {
-                     /* Check if book name already exists in database. */
+                    /* Check if book name already exists in database. */
                     if (mShelf.doesBookExist(bookName)) {
                         return resources.getString(R.string.book_name_already_exists, bookName);
                     }
@@ -378,12 +377,30 @@ public class SyncFragment extends Fragment {
     }
 
     @SuppressLint("StaticFieldLeak")
-    public void sparseTree(final long bookId, final long noteId) {
-        new AsyncTask<Void, Void, Void>() {
+    public void focusNoteInBook(final long noteId) {
+        new AsyncTask<Void, Void, Long>() {
             @Override
-            protected Void doInBackground(Void... params) {
-                BooksClient.sparseTree(getContext(), bookId, noteId);
-                return null;
+            protected Long doInBackground(Void... params) {
+                Long bookId = null;
+
+                Note note = mShelf.getNote(noteId);
+
+                if (note != null) {
+                    bookId = note.getPosition().getBookId();
+                    BooksClient.sparseTree(getContext(), bookId, noteId);
+                }
+
+                return bookId;
+            }
+
+            @Override
+            protected void onPostExecute(Long bookId) {
+                if (bookId != null) {
+                    Intent intent = new Intent(AppIntent.ACTION_OPEN_BOOK);
+                    intent.putExtra(AppIntent.EXTRA_BOOK_ID, bookId);
+                    intent.putExtra(AppIntent.EXTRA_NOTE_ID, noteId);
+                    LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
+                }
             }
         }.execute();
     }
@@ -611,14 +628,16 @@ public class SyncFragment extends Fragment {
                 mShelf.setNotesScheduledTime(noteIds, time);
                 return null;
             }
+        }.execute();
+    }
 
+    @SuppressLint("StaticFieldLeak")
+    public void updateDeadlineTime(final Set<Long> noteIds, final OrgDateTime time) {
+        new AsyncTask<Void, Void, Void>() {
             @Override
-            protected void onPostExecute(Void aVoid) {
-                if (mListener != null) {
-                    mListener.onScheduledTimeUpdated(noteIds, time);
-                } else {
-                    Log.w(TAG, "Listener not set, not calling onScheduledTimeUpdated");
-                }
+            protected Void doInBackground(Void... params) {
+                mShelf.setNotesDeadlineTime(noteIds, time);
+                return null;
             }
         }.execute();
     }
@@ -880,9 +899,7 @@ public class SyncFragment extends Fragment {
             @Override
             protected void onPostExecute(Integer noOfUpdated) {
                 if (mListener != null) {
-                    if (noOfUpdated == 1) {
-                        mListener.onNoteUpdated(note);
-                    } else {
+                    if (noOfUpdated != 1) {
                         mListener.onNoteUpdatingFailed(note);
                     }
                 }
@@ -992,10 +1009,16 @@ public class SyncFragment extends Fragment {
             protected Integer doInBackground(Void... voids) {
                 return mShelf.move(bookId, noteId, offset);
             }
+        }.execute();
+    }
 
+
+    @SuppressLint("StaticFieldLeak")
+    public void refileNotes(final long sourceBookId, final Set<Long> noteIds, final long targetBookId) {
+        new AsyncTask<Void, Void, Integer>() {
             @Override
-            protected void onPostExecute(Integer result) {
-                mListener.onNotesMoved(result);
+            protected Integer doInBackground(Void... voids) {
+                return mShelf.refile(sourceBookId, noteIds, targetBookId);
             }
         }.execute();
     }
@@ -1018,18 +1041,13 @@ public class SyncFragment extends Fragment {
         void onBookDeleted(Book book);
         void onBookDeletingFailed(Book book, IOException exception);
 
-        void onScheduledTimeUpdated(Set<Long> noteIds, OrgDateTime time);
-
         void onNoteCreated(Note note);
         void onNoteCreatingFailed();
 
-        void onNoteUpdated(Note note);
         void onNoteUpdatingFailed(Note note);
 
         void onNotesDeleted(int count);
         void onNotesCut(int count);
-
-        void onNotesMoved(int result);
 
         void onFailure(String message);
     }

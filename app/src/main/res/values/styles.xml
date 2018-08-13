@@ -17,8 +17,6 @@
 
         <item name="android:windowAnimationStyle">@style/WindowAnimation</item>
 
-        <item name="colorAccent">@color/blue_grey_500</item>
-
         <!-- Font sizes (defaults) -->
         <item name="font_micro">12sp</item>
         <item name="font_small">14sp</item>
@@ -57,7 +55,9 @@
         <item name="colorPrimary">@color/white</item>
         <item name="colorPrimaryDark">@color/black</item>
 
-        <item name="android:statusBarColor">#e6757575</item>
+        <item name="colorAccent">@color/blue_grey_500</item>
+
+        <item name="android:statusBarColor" tools:targetApi="21">#e6757575</item>
 
         <item name="app_bar_bg_color">@color/grey_300</item>
 
@@ -67,11 +67,12 @@
 
         <item name="item_bg">@drawable/item_selector</item>
 
+        <item name="item_selected_bg_color">@color/light_theme_item_selected_bg_color</item>
+
         <item name="fragment_books_bg_color">@color/light_theme_app_bar</item>
         <item name="item_book_card_bg_color">@color/light_theme_cards_and_dialogs</item>
 
         <item name="drawer_bg">@color/white</item>
-        <item name="drawer_divider">@color/grey_300</item>
         <item name="drawer_item_bg">@drawable/drawer_item_selector</item>
 
         <item name="item_head_state_todo_color">@color/red_900</item>
@@ -122,11 +123,13 @@
         <item name="ic_library_books_24dp">@drawable/ic_library_books_black_24dp</item>
         <item name="ic_link_18dp">@drawable/ic_link_black_18dp</item>
         <item name="ic_notifications_none_24dp">@drawable/ic_notifications_none_black_24dp</item>
+        <item name="ic_open_in_browser_24dp">@drawable/ic_open_in_browser_black_24dp</item>
         <item name="ic_repeat_24dp">@drawable/ic_repeat_black_24dp</item>
         <item name="ic_rotate_left_24dp">@drawable/ic_rotate_left_black_24dp</item>
         <item name="ic_rotate_right_24dp">@drawable/ic_rotate_right_black_24dp</item>
         <item name="ic_search_24dp">@drawable/ic_search_black_24dp</item>
         <item name="ic_settings_24dp">@drawable/ic_settings_black_24dp</item>
+        <item name="ic_storage_24dp">@drawable/ic_storage_black_24dp</item>
         <item name="ic_swap_vert_24dp">@drawable/ic_swap_vert_black_24dp</item>
         <item name="ic_sync_18dp">@drawable/ic_sync_black_18dp</item>
         <item name="ic_sync_24dp">@drawable/ic_sync_black_24dp</item>
@@ -135,8 +138,10 @@
         <item name="ic_star_border_24dp">@drawable/ic_star_border_black_24dp</item>
         <item name="ic_unfold_more_24dp">@drawable/ic_unfold_more_black_24dp</item>
         <item name="ic_warning_24dp">@drawable/ic_warning_black_24dp</item>
+        <item name="ic_widgets_24dp">@drawable/ic_widgets_black_24dp</item>
 
         <item name="oic_dropbox_linked">@drawable/cic_dropbox_blue_48px</item>
+        <item name="oic_git_48dp">@drawable/cic_git_black_48dp</item>
         <item name="oic_dropbox_not_linked">@drawable/cic_dropbox_black_48px</item>
         <item name="oic_new_above_24dp">@drawable/cic_new_above_black_24dp</item>
         <item name="oic_new_below_24dp">@drawable/cic_new_below_black_24dp</item>
@@ -145,7 +150,7 @@
         <item name="oic_today_36dp">@drawable/cic_today_black_36dp</item>
         <item name="oic_tomorrow_36dp">@drawable/cic_tomorrow_black_36dp</item>
 
-        <item name="oic_item_alpha">0.55</item>
+        <item name="oic_item_alpha">0.54</item>
 
         <item name="bullet_default">@drawable/bullet_state_default</item>
         <item name="bullet_folded">@drawable/bullet_state_folded</item>
@@ -156,8 +161,6 @@
         <item name="windowActionModeOverlay">true</item>
 
         <item name="android:windowAnimationStyle">@style/WindowAnimation</item>
-
-        <item name="colorAccent">@color/blue_grey_300</item>
 
         <!-- Font sizes (defaults) -->
         <item name="font_micro">12sp</item>
@@ -196,17 +199,20 @@
         <item name="colorPrimary">@color/black</item>
         <item name="colorPrimaryDark">@color/white</item>
 
-        <item name="android:statusBarColor">#e6000000</item>
+        <item name="colorAccent">@color/blue_grey_400</item>
+
+        <item name="android:statusBarColor" tools:targetApi="21">#e6000000</item>
 
         <item name="app_bar_bg_color">@color/dark_theme_app_bar</item>
 
         <item name="item_bg">@drawable/item_selector_dark</item>
 
+        <item name="item_selected_bg_color">@color/dark_theme_item_selected_bg_color</item>
+
         <item name="fragment_books_bg_color">@color/dark_theme_background</item>
         <item name="item_book_card_bg_color">@color/dark_theme_cards_and_dialogs</item>
 
         <item name="drawer_bg">@color/dark_theme_cards_and_dialogs</item>
-        <item name="drawer_divider">@color/white_text_disabled_color</item>
         <item name="drawer_item_bg">@drawable/drawer_item_selector_dark</item>
 
         <item name="item_head_state_todo_color">@color/red_200</item>
@@ -257,11 +263,13 @@
         <item name="ic_library_books_24dp">@drawable/ic_library_books_white_24dp</item>
         <item name="ic_link_18dp">@drawable/ic_link_white_18dp</item>
         <item name="ic_notifications_none_24dp">@drawable/ic_notifications_none_white_24dp</item>
+        <item name="ic_open_in_browser_24dp">@drawable/ic_open_in_browser_white_24dp</item>
         <item name="ic_repeat_24dp">@drawable/ic_repeat_white_24dp</item>
         <item name="ic_rotate_left_24dp">@drawable/ic_rotate_left_white_24dp</item>
         <item name="ic_rotate_right_24dp">@drawable/ic_rotate_right_white_24dp</item>
         <item name="ic_search_24dp">@drawable/ic_search_white_24dp</item>
         <item name="ic_settings_24dp">@drawable/ic_settings_white_24dp</item>
+        <item name="ic_storage_24dp">@drawable/ic_storage_white_24dp</item>
         <item name="ic_swap_vert_24dp">@drawable/ic_swap_vert_white_24dp</item>
         <item name="ic_sync_18dp">@drawable/ic_sync_white_18dp</item>
         <item name="ic_sync_24dp">@drawable/ic_sync_white_24dp</item>
@@ -270,8 +278,10 @@
         <item name="ic_star_border_24dp">@drawable/ic_star_border_white_24dp</item>
         <item name="ic_unfold_more_24dp">@drawable/ic_unfold_more_white_24dp</item>
         <item name="ic_warning_24dp">@drawable/ic_warning_white_24dp</item>
+        <item name="ic_widgets_24dp">@drawable/ic_widgets_white_24dp</item>
 
         <item name="oic_dropbox_linked">@drawable/cic_dropbox_blue_48px</item>
+        <item name="oic_git_48dp">@drawable/cic_git_white_48dp</item>
         <item name="oic_dropbox_not_linked">@drawable/cic_dropbox_white_48px</item>
         <item name="oic_new_above_24dp">@drawable/cic_new_above_white_24dp</item>
         <item name="oic_new_below_24dp">@drawable/cic_new_below_white_24dp</item>
@@ -280,7 +290,7 @@
         <item name="oic_today_36dp">@drawable/cic_today_white_36dp</item>
         <item name="oic_tomorrow_36dp">@drawable/cic_tomorrow_white_36dp</item>
 
-        <item name="oic_item_alpha">0.7</item>
+        <item name="oic_item_alpha">0.70</item>
 
         <item name="bullet_default">@drawable/bullet_state_default_dark</item>
         <item name="bullet_folded">@drawable/bullet_state_folded_dark</item>
@@ -297,20 +307,27 @@
 
     <style name="AppDarkTheme.Black">
         <item name="android:windowBackground">@color/dark_theme_status_bar</item>
+
         <item name="android:itemBackground">@color/dark_theme_status_bar</item>
         <item name="android:colorButtonNormal" tools:targetApi="21">@color/dark_theme_app_bar</item>
 
-        <item name="android:statusBarColor">#000000</item>
+        <item name="colorAccent">@color/blue_grey_300</item>
+
+        <item name="android:statusBarColor" tools:targetApi="21">#000000</item>
 
         <item name="app_bar_bg_color">@color/dark_theme_status_bar</item>
 
         <item name="item_bg">@drawable/item_selector_black</item>
+
+        <item name="item_selected_bg_color">@color/black_theme_item_selected_bg_color</item>
 
         <item name="fragment_books_bg_color">@color/dark_theme_status_bar</item>
         <item name="item_book_card_bg_color">@color/dark_theme_status_bar</item>
 
         <item name="drawer_bg">@color/dark_theme_status_bar</item>
         <item name="drawer_item_bg">@drawable/drawer_item_selector_black</item>
+
+        <item name="indent_line_color">#1cffffff</item>
 
         <item name="snackbar_bg_color">@color/dark_theme_status_bar</item>
 
@@ -382,6 +399,7 @@
         <!--<item name="android:textAppearanceMedium">@style/TextAppearance.AppCompat.Large</item>-->
     </style>
 
+
     <style name="WindowAnimation" parent="@android:style/Animation.Activity">
         <item name="android:activityOpenEnterAnimation">@anim/fragment_enter</item>
         <item name="android:activityOpenExitAnimation">@anim/fragment_exit</item>
@@ -431,23 +449,28 @@
     <!-- Note fragment. -->
 
     <style name="BorderlessButton" parent="Base.Widget.AppCompat.Button.Borderless">
-
+        <item name="android:minHeight">0dp</item>
+        <item name="android:minWidth">0dp</item>
     </style>
 
-    <style name="NoteFragmentButton" parent="BorderlessButton">
-        <item name="android:layout_width">wrap_content</item>
+    <style name="NoteFragmentListItem">
+        <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:paddingLeft">4dp</item>
-        <item name="android:paddingStart" tools:targetApi="jelly_bean_mr1">4dp</item>
-        <item name="android:paddingRight">4dp</item>
-        <item name="android:paddingEnd" tools:targetApi="jelly_bean_mr1">4dp</item>
-        <item name="android:drawablePadding">16dp</item>
-        <item name="android:gravity">left|center_vertical</item>
+        <item name="android:layout_marginLeft">@dimen/screen_edge</item>
+        <item name="android:layout_marginRight">@dimen/screen_edge</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:gravity">center_vertical</item>
         <item name="android:orientation">horizontal</item>
-        <item name="android:textSize">?fragment_note_time_buttons_text_size</item>
-        <!-- From Lollipop button text is all caps? -->
-        <item name="android:textAllCaps">false</item>
+    </style>
 
+    <style name="NoteFragmentListItemSpinnerButton" parent="Widget.AppCompat.Spinner.Underlined">
+        <item name="android:focusable">true</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:minWidth">@dimen/fragment_note_field_min_width</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginLeft">@dimen/padded_content_left_margin_from_icon</item>
+        <!--<item name="android:layout_marginRight">@dimen/screen_edge</item>-->
+        <item name="android:backgroundTint" tools:targetApi="lollipop">?attr/text_disabled_color</item>
     </style>
 
     <style name="BookItemInfoIcon">
@@ -481,17 +504,17 @@
     </style>
 
     <style name="ListViewItem">
-        <item name="android:paddingTop">@dimen/item_head_padding</item>
-        <item name="android:paddingBottom">@dimen/item_head_padding</item>
-        <item name="android:paddingLeft">@dimen/fragment_horizontal_padding</item>
-        <item name="android:paddingRight">@dimen/fragment_horizontal_padding</item>
-        <item name="android:minHeight">@dimen/item_head_min_height</item>
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">6dp</item>
+        <item name="android:paddingLeft">@dimen/screen_edge</item>
+        <item name="android:paddingRight">@dimen/screen_edge</item>
+        <item name="android:minHeight">48dp</item>
     </style>
 
     <style name="BigCenteredText">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_margin">@dimen/fragment_padding</item>
+        <item name="android:layout_margin">@dimen/screen_edge</item>
 
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center</item>
@@ -534,7 +557,7 @@
         <!--<item name="android:dividerHeight">0dp</item>-->
 
         <item name="android:paddingTop">4dp</item>
-        <!--<item name="android:paddingBottom">4dp</item>-->
+        <item name="android:paddingBottom">4dp</item>
 
         <item name="menu_container">@+id/item_head_menu_container</item>
         <item name="menu_for_fling_right">0</item>

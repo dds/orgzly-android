@@ -3,6 +3,7 @@ package com.orgzly.android.misc
 import android.support.test.rule.ActivityTestRule
 import com.orgzly.android.BookName
 import com.orgzly.android.LocalStorage
+import com.orgzly.android.NotesExporter
 import com.orgzly.android.OrgzlyTest
 import com.orgzly.android.prefs.AppPreferences
 import com.orgzly.android.ui.MainActivity
@@ -48,7 +49,8 @@ class CreatedAtTest : OrgzlyTest() {
                         ":END:\n")
 
         withTempFile { file ->
-            shelf.writeBookToFile(book, BookName.Format.ORG, file)
+            NotesExporter.getInstance(context).exportBook(book, file)
+
             shelf.loadBookFromFile("book-a", BookName.Format.ORG, file)
 
             val note = shelf.getNote("Note [a-1]")
@@ -75,12 +77,12 @@ class CreatedAtTest : OrgzlyTest() {
 
         shelf.sync()
 
-        assertFalse(shelf.getBook(1).isModifiedAfterLastSync)
+        assertFalse(shelf.getBook("book-a").isModifiedAfterLastSync)
 
         AppPreferences.createdAtProperty(context, "CREATED_AT")
         shelf.syncCreatedAtTimeWithProperty()
 
-        assertTrue(shelf.getBook(1).isModifiedAfterLastSync)
+        assertTrue(shelf.getBook("book-a").isModifiedAfterLastSync)
     }
 
     @Test
@@ -98,7 +100,7 @@ class CreatedAtTest : OrgzlyTest() {
 
         shelf.syncCreatedAtTimeWithProperty()
 
-        assertFalse(shelf.getBook(1).isModifiedAfterLastSync)
+        assertFalse(shelf.getBook("book-a").isModifiedAfterLastSync)
     }
 
     @Test

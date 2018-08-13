@@ -46,6 +46,20 @@ class ActionService : JobIntentService() {
                                 intent.getStringExtra(AppIntent.EXTRA_PROPERTY_VALUE))
                 }
 
+            AppIntent.ACTION_UPDATE_NOTE -> {
+                val bookId = intent.getLongExtra(AppIntent.EXTRA_BOOK_ID, 0)
+                val noteId = intent.getLongExtra(AppIntent.EXTRA_NOTE_ID, 0)
+                val content = intent.getStringExtra(AppIntent.EXTRA_NOTE_CONTENT)
+
+                shelf.updateContent(bookId, noteId, content)
+            }
+
+            AppIntent.ACTION_UPDATE_BOOK -> {
+                val bookId = intent.getLongExtra(AppIntent.EXTRA_BOOK_ID, 0)
+                val preface= intent.getStringExtra(AppIntent.EXTRA_BOOK_PREFACE)
+
+                shelf.updateBookPreface(bookId, preface)
+            }
         }
     }
 
@@ -107,6 +121,7 @@ class ActionService : JobIntentService() {
         const val GETTING_STARTED_NOTEBOOK_NAME = "Getting Started with Orgzly"
         const val GETTING_STARTED_NOTEBOOK_RESOURCE_ID = R.raw.orgzly_getting_started
 
+        @JvmStatic
         fun enqueueWork(context: Context, action: String) {
             val intent = Intent(context, ActionService::class.java)
 

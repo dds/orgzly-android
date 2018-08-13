@@ -6,7 +6,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:padding="@dimen/padding_16"
+    android:padding="@dimen/screen_edge"
     android:scrollbarStyle="outsideOverlay">
 
     <LinearLayout
@@ -18,9 +18,163 @@
             android:id="@+id/dialog_whats_new_intro"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/padding_4"
+            android:layout_marginBottom="@dimen/space_between_content_areas"
             android:text="@string/whats_new_intro"/>
 
+
+        <TextView
+            style="@style/WhatsNewVersion"
+            android:text="v1.6.8"
+            tools:ignore="HardcodedText"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Toggling checkboxes" />
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Sorting notes by position in notebook (&lt;tt&gt;o.pos&lt;/tt&gt;)" />
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Preference to display notebook name in widget" />
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Preference to disable &lt;tt&gt;LAST_REPEAT&lt;/tt&gt; property" />
+
+
+        <TextView
+            style="@style/WhatsNewVersion"
+            android:text="v1.6.7"
+            tools:ignore="HardcodedText"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Support larger font size for widget" />
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Add buttons for setting deadline time" />
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Display inherited tags in widget" />
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Handle large values for tags indentation" />
+
+
+        <TextView
+            style="@style/WhatsNewVersion"
+            android:text="v1.6.6"
+            tools:ignore="HardcodedText"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Configure widgets' color scheme and transparency"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Configure widgets' update frequency"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="New action for moving note to the end of selected notebook"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Various bug fixes and improvements"/>
+
+        <TextView
+            style="@style/WhatsNewVersion"
+            android:text="v1.6.5"
+            tools:ignore="HardcodedText"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Fold drawers, unfold on click temporarily"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Log time shifting to &lt;tt&gt;LOGBOOK&lt;/tt&gt; drawer"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Update &lt;tt&gt;LAST_REPEAT&lt;/tt&gt; property after shifting time"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Keep habit deadline on time shift"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Handle content lines formatted as org headings"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Various smaller improvements"/>
+
+
+        <TextView
+            style="@style/WhatsNewVersion"
+            android:text="v1.6.4"
+            tools:ignore="HardcodedText"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Bug fixes"/>
+
+
+        <TextView
+            style="@style/WhatsNewVersion"
+            android:text="v1.6.3"
+            tools:ignore="HardcodedText"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Search and order by created-at time (&lt;tt&gt;cr&lt;/tt&gt;)"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Option to hide metadata in note fragment"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="New quick-menu button for changing state"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Ignore system locale and use US (new option)"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Preset notebook on new note from widget"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Make file immediately visible when using MTP"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Target Oreo"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Use new app logo"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Drawer, note view and bullets redesign"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="Several performance improvements"/>
+
+        <com.orgzly.android.ui.views.WhatsNewChange
+            style="@style/WhatsNewChange"
+            app:text="New and updated translations"/>
 
 
         <TextView
@@ -31,38 +185,46 @@
         <com.orgzly.android.ui.views.WhatsNewChange
             style="@style/WhatsNewChange"
             app:text="Remove Agenda and support &lt;tt&gt;ad.days&lt;/tt&gt; in any query"/>
+
         <com.orgzly.android.ui.views.WhatsNewChange
             style="@style/WhatsNewChange"
             app:text="Support grouping using parentheses in queries"/>
+
         <com.orgzly.android.ui.views.WhatsNewChange
             style="@style/WhatsNewChange"
             app:text="Support &lt;tt&gt;o.state&lt;/tt&gt;"/>
+
         <com.orgzly.android.ui.views.WhatsNewChange
             style="@style/WhatsNewChange"
             app:text="Support &lt;tt&gt;c.closed-time&lt;/tt&gt; and &lt;tt&gt;o.closed&lt;/tt&gt;"/>
+
         <com.orgzly.android.ui.views.WhatsNewChange
             style="@style/WhatsNewChange"
             app:text="Support &lt;tt&gt;eq&lt;/tt&gt;, &lt;tt&gt;ne&lt;/tt&gt;, &lt;tt&gt;lt&lt;/tt&gt;, &lt;tt&gt;le&lt;/tt&gt;, &lt;tt&gt;gt&lt;/tt&gt; and &lt;tt&gt;ge&lt;/tt&gt; in &lt;tt&gt;s&lt;/tt&gt;, &lt;tt&gt;d&lt;/tt&gt; and &lt;tt&gt;c&lt;/tt&gt; operators"/>
+
         <com.orgzly.android.ui.views.WhatsNewChange
             style="@style/WhatsNewChange"
             app:text="Support using past times in queries (e.g. &lt;tt&gt;s.gt.-2d&lt;/tt&gt;)"/>
+
         <com.orgzly.android.ui.views.WhatsNewChange
             style="@style/WhatsNewChange"
             app:text="Import and export saved searches"/>
+
         <com.orgzly.android.ui.views.WhatsNewChange
             style="@style/WhatsNewChange"
             app:text="Add app shortcuts for syncing and creating new notes"/>
+
         <com.orgzly.android.ui.views.WhatsNewChange
             style="@style/WhatsNewChange"
             app:text="Allow toggling &lt;tt&gt;DONE&lt;/tt&gt; state with the check mark button from quick-menu"/>
+
         <com.orgzly.android.ui.views.WhatsNewChange
             style="@style/WhatsNewChange"
             app:text="Use system's file browser for selecting directories"/>
+
         <com.orgzly.android.ui.views.WhatsNewChange
             style="@style/WhatsNewChange"
             app:text='New translations from Orgzly&apos;s &lt;a href="https://crowdin.com/project/orgzly"&gt;localization project&lt;/a&gt;'/>
-
-
 
 
         <TextView
@@ -102,6 +264,7 @@
             style="@style/WhatsNewChange"
             app:text="Various bug fixes and improvements"/>
 
+
         <TextView
             style="@style/WhatsNewVersion"
             android:text="v1.6"
@@ -134,6 +297,7 @@
         <com.orgzly.android.ui.views.WhatsNewChange
             style="@style/WhatsNewChange"
             app:text="Various bug fixes"/>
+
 
         <TextView
             style="@style/WhatsNewVersion"

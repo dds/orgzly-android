@@ -15,8 +15,8 @@ import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static com.orgzly.android.espresso.EspressoUtils.clickClickableSpan;
 import static com.orgzly.android.espresso.EspressoUtils.onListItem;
-import static org.hamcrest.CoreMatchers.containsString;
 
 public class InternalLinksTest extends OrgzlyTest {
     @Rule
@@ -31,7 +31,7 @@ public class InternalLinksTest extends OrgzlyTest {
                 "[[id:bdce923b-C3CD-41ED-B58E-8BDF8BABA54F]]\n" +
 
                 "* Note [a-2]\n" +
-                "[[#Different case custom id]] \n" + // click() opens a note without trailing space
+                "[[#Different case custom id]]\n" +
 
                 "* Note [a-3]\n" +
                 "[[#Link to note in a different book]]\n" +
@@ -60,23 +60,26 @@ public class InternalLinksTest extends OrgzlyTest {
     }
 
     @Test
-    public void testInternalLink() {
-        onListItem(0).perform(click());
-        onView(withText("#Link to note in a different book")).perform(click());
-        onView(withId(R.id.fragment_note_title)).check(matches(withText("Note [b-3]")));
-    }
-
-    @Test
     public void testDifferentCaseUuidInternalLink() {
         onListItem(0).perform(click());
-        onView(withText("id:bdce923b-C3CD-41ED-B58E-8BDF8BABA54F")).perform(click());
+        onListItem(0).onChildView(withId(R.id.item_head_content))
+                .perform(clickClickableSpan("id:bdce923b-C3CD-41ED-B58E-8BDF8BABA54F"));
         onView(withId(R.id.fragment_note_title)).check(matches(withText("Note [b-2]")));
     }
 
     @Test
     public void testDifferentCaseCustomIdInternalLink() {
         onListItem(0).perform(click());
-        onView(withText(containsString("#Different case custom id"))).perform(click());
+        onListItem(1).onChildView(withId(R.id.item_head_content))
+                .perform(clickClickableSpan("#Different case custom id"));
         onView(withId(R.id.fragment_note_title)).check(matches(withText("Note [b-1]")));
+    }
+
+    @Test
+    public void testInternalLink() {
+        onListItem(0).perform(click());
+        onListItem(2).onChildView(withId(R.id.item_head_content))
+                .perform(clickClickableSpan("#Link to note in a different book"));
+        onView(withId(R.id.fragment_note_title)).check(matches(withText("Note [b-3]")));
     }
 }

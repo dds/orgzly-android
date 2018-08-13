@@ -13,7 +13,7 @@ import android.net.Uri;
 import android.os.RemoteException;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
-
+import android.util.Log;
 import com.orgzly.BuildConfig;
 import com.orgzly.R;
 import com.orgzly.android.filter.Filter;
@@ -30,6 +30,8 @@ import com.orgzly.android.reminders.ReminderService;
 import com.orgzly.android.repos.Repo;
 import com.orgzly.android.repos.RepoFactory;
 import com.orgzly.android.repos.Rook;
+import com.orgzly.android.repos.TwoWaySyncRepo;
+import com.orgzly.android.repos.TwoWaySyncResult;
 import com.orgzly.android.repos.VersionedRook;
 import com.orgzly.android.sync.BookNamesake;
 import com.orgzly.android.sync.BookSyncStatus;
@@ -46,14 +48,11 @@ import com.orgzly.org.OrgProperties;
 import com.orgzly.org.datetime.OrgDateTime;
 import com.orgzly.org.parser.OrgParsedFile;
 import com.orgzly.org.parser.OrgParser;
-import com.orgzly.org.parser.OrgParserSettings;
 import com.orgzly.org.parser.OrgParserWriter;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -193,7 +192,7 @@ public class Shelf {
         if (book != null) {
             File file = getTempBookFile();
             try {
-                writeBookToFile(book, format, file);
+                NotesExporter.getInstance(mContext, format).exportBook(book, file);
                 return MiscUtils.readStringFromFile(file);
             } finally {
                 file.delete();
@@ -211,7 +210,7 @@ public class Shelf {
         File file = mLocalStorage.getExportFile(book, format);
 
         /* Write book. */
-        writeBookToFile(book, format, file);
+        NotesExporter.getInstance(mContext, format).exportBook(book, file);
 
         /* Make file immediately visible when using MTP.
          * See https://github.com/orgzly/orgzly-android/issues/44
@@ -221,66 +220,14 @@ public class Shelf {
         return file;
     }
 
-    /**
-     * Writes content of book from database to specified file.
-     * TODO: Do in Provider under transaction
-     */
-    public void writeBookToFile(final Book book, BookName.Format format, File file) throws IOException {
-
-        /* Use the same encoding. */
-        String encoding = book.getUsedEncoding();
-        if (encoding == null) {
-            encoding = Charset.defaultCharset().name();
-        }
-
-        final PrintWriter out = new PrintWriter(file, encoding);
-
-        try {
-            String separateNotesWithNewLine = AppPreferences.separateNotesWithNewLine(mContext);
-            String createdAtPropertyName = AppPreferences.createdAtProperty(mContext);
-            boolean useCreatedAtProperty = AppPreferences.createdAt(mContext);
-
-            OrgParserSettings parserSettings = OrgParserSettings.getBasic();
-
-            if (mContext.getString(R.string.pref_value_separate_notes_with_new_line_always).equals(separateNotesWithNewLine)) {
-                parserSettings.separateNotesWithNewLine = OrgParserSettings.SeparateNotesWithNewLine.ALWAYS;
-            } else if (mContext.getString(R.string.pref_value_separate_notes_with_new_line_multi_line_notes_only).equals(separateNotesWithNewLine)) {
-                parserSettings.separateNotesWithNewLine = OrgParserSettings.SeparateNotesWithNewLine.MULTI_LINE_NOTES_ONLY;
-            } else if (mContext.getString(R.string.pref_value_separate_notes_with_new_line_never).equals(separateNotesWithNewLine)) {
-                parserSettings.separateNotesWithNewLine = OrgParserSettings.SeparateNotesWithNewLine.NEVER;
-            }
-
-            parserSettings.separateHeaderAndContentWithNewLine = AppPreferences.separateHeaderAndContentWithNewLine(mContext);
-            parserSettings.tagsColumn = AppPreferences.tagsColumn(mContext);
-            parserSettings.orgIndentMode = AppPreferences.orgIndentMode(mContext);
-            parserSettings.orgIndentIndentationPerLevel = AppPreferences.orgIndentIndentationPerLevel(mContext);
-
-            final OrgParserWriter parserWriter = new OrgParserWriter(parserSettings);
-
-            // Write preface
-            out.write(parserWriter.whiteSpacedFilePreface(book.getPreface()));
-
-            // Write notes
-            NotesClient.forEachBookNote(mContext, book.getName(), note -> {
-                // Update note properties with created-at property, if the time exists.
-                if (useCreatedAtProperty && createdAtPropertyName != null && note.getCreatedAt() > 0) {
-                    OrgDateTime time = new OrgDateTime(note.getCreatedAt(), false);
-                    note.getHead().addProperty(createdAtPropertyName, time.toString());
-                }
-
-                out.write(parserWriter.whiteSpacedHead(
-                        note.getHead(),
-                        note.getPosition().getLevel(),
-                        book.getOrgFileSettings().isIndented()));
-            });
-
-        } finally {
-            out.close();
-        }
-    }
-
     public void setNotesScheduledTime(Set<Long> noteIds, OrgDateTime time) {
         NotesClient.updateScheduledTime(mContext, noteIds, time);
+        notifyDataChanged(mContext);
+        syncOnNoteUpdate();
+    }
+
+    public void setNotesDeadlineTime(Set<Long> noteIds, OrgDateTime time) {
+        NotesClient.updateDeadlineTime(mContext, noteIds, time);
         notifyDataChanged(mContext);
         syncOnNoteUpdate();
     }
@@ -316,6 +263,13 @@ public class Shelf {
 
     public int updateNote(Note note) {
         int result = NotesClient.update(mContext, note);
+        notifyDataChanged(mContext);
+        syncOnNoteUpdate();
+        return result;
+    }
+
+    public int updateContent(long bookId, long noteId, String content) {
+        int result = NotesClient.updateContent(mContext, bookId, noteId, content);
         notifyDataChanged(mContext);
         syncOnNoteUpdate();
         return result;
@@ -386,6 +340,14 @@ public class Shelf {
         int result = BooksClient.moveNotes(mContext, bookId, noteId, offset);
         notifyDataChanged(mContext);
         // updateSync(); handled on action bar destroy instead
+        return result;
+    }
+
+
+    public int refile(long bookId, Set<Long> noteIds, long targetBookId) {
+        int result = cut(bookId, noteIds);
+        Note root = NotesClient.getRootNode(mContext, targetBookId);
+        paste(targetBookId, root.getId(), Place.UNDER);
         return result;
     }
 
@@ -487,6 +449,21 @@ public class Shelf {
         String fileName;
         BookAction bookAction = null;
 
+        // XXX: This is a pretty nasty hack that completely circumvents the existing code path
+        if (!namesake.getRooks().isEmpty()) {
+            VersionedRook rook = namesake.getRooks().get(0);
+            if (rook != null && namesake.getStatus() != BookSyncStatus.NO_CHANGE) {
+                Uri repoUri = rook.getRepoUri();
+                Repo repo = getRepo(repoUri);
+                if (repo instanceof TwoWaySyncRepo) {
+                    handleTwoWaySync((TwoWaySyncRepo) repo, namesake);
+                    return new BookAction(
+                            BookAction.Type.INFO,
+                            namesake.getStatus().msg(repo.getUri().toString()));
+                }
+            }
+        }
+
         switch (namesake.getStatus()) {
             case NO_CHANGE:
                 bookAction = new BookAction(BookAction.Type.INFO, namesake.getStatus().msg());
@@ -498,6 +475,7 @@ public class Shelf {
             case ONLY_BOOK_WITHOUT_LINK_AND_MULTIPLE_REPOS:
             case BOOK_WITH_LINK_AND_ROOK_EXISTS_BUT_LINK_POINTING_TO_DIFFERENT_ROOK:
             case CONFLICT_BOTH_BOOK_AND_ROOK_MODIFIED:
+
             case CONFLICT_BOOK_WITH_LINK_AND_ROOK_BUT_NEVER_SYNCED_BEFORE:
             case CONFLICT_LAST_SYNCED_ROOK_AND_LATEST_ROOK_ARE_DIFFERENT:
             case ONLY_DUMMY:
@@ -554,6 +532,15 @@ public class Shelf {
         return bookAction;
     }
 
+    private Repo getRepo(Uri repoUrl) throws IOException {
+        Repo repo = RepoFactory.getFromUri(mContext, repoUrl);
+
+        if (repo == null) {
+            throw new IOException("Unsupported repository URL \"" + repoUrl + "\"");
+        }
+        return repo;
+    }
+
     /**
      * Downloads remote book, parses it and stores it to {@link Shelf}.
      * @return book now linked to remote one
@@ -598,18 +585,15 @@ public class Shelf {
      * @throws IOException
      */
     public Book saveBookToRepo(String repoUrl, String fileName, Book book, BookName.Format format) throws IOException {
-        Repo repo = RepoFactory.getFromUri(mContext, repoUrl);
-
-        if (repo == null) {
-            throw new IOException("Unsupported repository URL \"" + repoUrl + "\"");
-        }
 
         VersionedRook uploadedBook;
+
+        Repo repo = getRepo(Uri.parse(repoUrl));
 
         File tmpFile = getTempBookFile();
         try {
             /* Write to temporary file. */
-            writeBookToFile(book, format, tmpFile);
+            NotesExporter.getInstance(mContext, format).exportBook(book, tmpFile);
 
             /* Upload to repo. */
             uploadedBook = repo.storeBook(tmpFile, fileName);
@@ -626,8 +610,44 @@ public class Shelf {
         return book;
     }
 
+    public Book handleTwoWaySync(TwoWaySyncRepo repo, BookNamesake namesake) throws IOException {
+        Book book = namesake.getBook();
+        VersionedRook currentRook = book.getLastSyncedToRook();
+        VersionedRook someRook = currentRook == null ? namesake.getRooks().get(0) : currentRook;
+        VersionedRook newRook = currentRook;
+        File dbFile = getTempBookFile();
+        try {
+            NotesExporter.getInstance(mContext, BookName.Format.ORG).exportBook(book, dbFile);
+            TwoWaySyncResult result = repo.syncBook(someRook.getUri(), currentRook, dbFile);
+            newRook = result.getNewRook();
+            if (result.getLoadFile() != null) {
+                String fileName = BookName.getFileName(mContext, newRook.getUri());
+                BookName bookName = BookName.fromFileName(fileName);
+                Log.i("Git", String.format("Loading from file %s", result.getLoadFile().toString()));
+                book = loadBookFromFile(bookName.getName(), bookName.getFormat(),
+                        result.getLoadFile(), newRook);
+                BooksClient.setModificationTime(mContext, book.getId(), 0);
+            }
+            book.setLastSyncedToRook(newRook);
+        } finally {
+            /* Delete temporary files. */
+            dbFile.delete();
+        }
+
+        BooksClient.saved(mContext, book.getId(), newRook);
+
+        return book;
+    }
+
     public int updateBookSettings(Book book) {
         return BooksClient.updateSettings(mContext, book);
+    }
+
+    public int updateBookPreface(long bookId, String preface) {
+        int result = BooksClient.updatePreface(mContext, bookId, preface);
+        notifyDataChanged(mContext);
+        syncOnNoteUpdate();
+        return result;
     }
 
     public void renameBook(Book book, String name) throws IOException {
@@ -654,7 +674,7 @@ public class Shelf {
             }
         }
 
-         /* Prefer link. */
+        /* Prefer link. */
         if (book.getLastSyncedToRook() != null) {
             VersionedRook vrook = book.getLastSyncedToRook();
             Repo repo = RepoFactory.getFromUri(mContext, vrook.getRepoUri());
@@ -717,24 +737,24 @@ public class Shelf {
     public void deleteFilters(Set<Long> ids) {
         // TODO: Send a single request. */
         for (long id: ids) {
-            FiltersClient.INSTANCE.delete(mContext, id);
+            FiltersClient.delete(mContext, id);
         }
     }
 
     public void createFilter(Filter filter) {
-        FiltersClient.INSTANCE.create(mContext, filter);
+        FiltersClient.create(mContext, filter);
     }
 
     public void updateFilter(long id, Filter filter) {
-        FiltersClient.INSTANCE.update(mContext, id, filter);
+        FiltersClient.update(mContext, id, filter);
     }
 
     public void moveFilterUp(long id) {
-        FiltersClient.INSTANCE.moveUp(mContext, id);
+        FiltersClient.moveUp(mContext, id);
     }
 
     public void moveFilterDown(long id) {
-        FiltersClient.INSTANCE.moveDown(mContext, id);
+        FiltersClient.moveDown(mContext, id);
     }
 
     public void cycleVisibility(Book book) {
@@ -820,13 +840,13 @@ public class Shelf {
         intent.setAction(AppIntent.ACTION_SYNC_START);
         intent.putExtra(AppIntent.EXTRA_IS_AUTOMATIC, true);
 
-        mContext.startService(intent);
+        SyncService.start(mContext, intent);
     }
 
     public void directedSync() {
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG);
         Intent intent = new Intent(mContext, SyncService.class);
-        mContext.startService(intent);
+        SyncService.start(mContext, intent);
     }
 
     /**
@@ -1047,7 +1067,7 @@ public class Shelf {
 
         } else {
             String msg = mContext.getString(R.string.no_such_link_target, propName, propValue);
-            CommonActivity.Companion.showSnackbar(mContext, msg);
+            CommonActivity.showSnackbar(mContext, msg);
         }
     }
 

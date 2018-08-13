@@ -273,7 +273,7 @@ public class ReminderService extends JobIntentService {
 
             int jobId = ReminderJob.scheduleJob(exactMs);
 
-            log = jobRunTimeString(jobId) + " for “" + firstNote.getPayload().title + "”";
+            log = "#" + jobId + " @ " + jobRunTimeString(jobId) + " for “" + firstNote.getPayload().title + "”";
 
         } else {
             log = "No notes found";
@@ -379,7 +379,7 @@ public class ReminderService extends JobIntentService {
                     .setCategory(NotificationCompat.CATEGORY_REMINDER)
                     .setPriority(NotificationCompat.PRIORITY_MAX)
                     .setColor(ContextCompat.getColor(context, R.color.notification))
-                    .setSmallIcon(R.drawable.cic_orgzly_notification);
+                    .setSmallIcon(R.drawable.ic_logo_for_notification);
 
             NotificationCompat.WearableExtender wearableExtender = new NotificationCompat.WearableExtender();
 
@@ -399,10 +399,11 @@ public class ReminderService extends JobIntentService {
                 builder.setLights(Color.BLUE, 1000, 5000);
             }
 
-            builder.setContentTitle(OrgFormatter.INSTANCE.parse(
+            builder.setContentTitle(OrgFormatter.parse(
                     noteReminder.getPayload().title,
                     context,
-                    false // Do not linkify links in notification
+                    false, // Do not linkify links in notification,
+                    false // Do not parse checkboxes
             ));
 
             builder.setContentText(line);
@@ -413,7 +414,7 @@ public class ReminderService extends JobIntentService {
             );
 
             /* Open note on notification click. */
-            PendingIntent openPi = ActivityUtils.INSTANCE.mainActivityPendingIntent(
+            PendingIntent openPi = ActivityUtils.mainActivityPendingIntent(
                     context, noteReminder.getPayload().bookId, noteReminder.getPayload().noteId);
             builder.setContentIntent(openPi);
 

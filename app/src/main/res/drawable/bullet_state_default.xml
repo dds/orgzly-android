@@ -3,16 +3,16 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:top="8dp"
-        android:right="8dp"
-        android:bottom="8dp"
-        android:left="8dp"
+        android:top="@dimen/bullet_inner_inset"
+        android:right="@dimen/bullet_inner_inset"
+        android:bottom="@dimen/bullet_inner_inset"
+        android:left="@dimen/bullet_inner_inset"
         android:gravity="center">
 
         <shape android:shape="oval">
             <size
-                android:width="8dp"
-                android:height="8dp" />
+                android:width="@dimen/bullet_inner_size"
+                android:height="@dimen/bullet_inner_size" />
 
             <solid android:color="@color/grey_700"/>
         </shape>

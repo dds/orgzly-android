@@ -6,14 +6,12 @@ import android.content.res.Resources
 import android.database.Cursor
 import android.os.Bundle
 import android.support.annotation.ColorInt
-import android.support.annotation.DrawableRes
 import android.support.design.widget.NavigationView
 import android.support.v4.content.Loader
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.view.Menu
-import android.widget.ImageView
 import com.orgzly.BuildConfig
 import com.orgzly.R
 import com.orgzly.android.AppIntent
@@ -33,7 +31,9 @@ import com.orgzly.android.util.LogUtils
 import java.util.*
 
 
-internal class DrawerNavigationView(private val activity: MainActivity, navView: NavigationView) : android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor> {
+internal class DrawerNavigationView(private val activity: MainActivity, navView: NavigationView) :
+        android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor> {
+
     private val menu: Menu = navView.menu
 
     private val menuItemIdMap = hashMapOf<String, Int>()
@@ -65,7 +65,7 @@ internal class DrawerNavigationView(private val activity: MainActivity, navView:
 
         val fragment = activity.supportFragmentManager.findFragmentByTag(activeFragmentTag)
 
-        if (fragment is DrawerListed) {
+        if (fragment != null && fragment is DrawerItem) {
             val fragmentMenuItemId = fragment.getCurrentDrawerItemId()
 
             val itemId = menuItemIdMap[fragmentMenuItemId]

@@ -11,6 +11,7 @@ import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -18,11 +19,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 import android.widget.ViewFlipper;
@@ -41,9 +40,11 @@ import com.orgzly.android.ui.NotePlace;
 import com.orgzly.android.ui.NotePriorities;
 import com.orgzly.android.ui.NoteStates;
 import com.orgzly.android.ui.Place;
+import com.orgzly.android.ui.ShareActivity;
 import com.orgzly.android.ui.dialogs.TimestampDialogFragment;
-import com.orgzly.android.ui.drawer.DrawerListed;
+import com.orgzly.android.ui.drawer.DrawerItem;
 import com.orgzly.android.ui.util.ActivityUtils;
+import com.orgzly.android.ui.views.TextViewWithMarkup;
 import com.orgzly.android.util.LogUtils;
 import com.orgzly.android.util.MiscUtils;
 import com.orgzly.android.util.OrgFormatter;
@@ -56,9 +57,14 @@ import com.orgzly.org.datetime.OrgRange;
 import com.orgzly.org.parser.OrgParserWriter;
 import com.orgzly.org.utils.StateChangeLogic;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Note editor.
@@ -67,7 +73,7 @@ public class NoteFragment extends Fragment
         implements
         View.OnClickListener,
         TimestampDialogFragment.OnDateTimeSetListener,
-        DrawerListed {
+        DrawerItem {
 
     private static final String TAG = NoteFragment.class.getName();
 
@@ -106,29 +112,38 @@ public class NoteFragment extends Fragment
     private String mInitialTitle; /* Initial title (used for when sharing to Orgzly) */
     private String mInitialContent; /* Initial content (used when sharing to Orgzly) */
 
-    private Note mNote;
-    private Book mBook;
+    private Note note;
+    private Book book;
 
 
-    private ScrollView scrollView;
+    private EditText title;
 
-    private EditText mTitleView;
+    private TextView locationView;
+    private TextView locationButtonView;
 
-    private MultiAutoCompleteTextView mTagsView;
+    private View tagsContainer;
+    private MultiAutoCompleteTextView tagsView;
 
-    private Button mState;
-    private Button mPriority;
+    private View stateContainer;
+    private TextView state;
 
-    private Button mScheduledButton;
-    private Button mDeadlineButton;
-    private Button mClosedButton;
+    private View priorityContainer;
+    private TextView priority;
 
-    private LinearLayout propertyList;
-    private Button addProperty;
+    private View scheduledTimeContainer;
+    private TextView scheduledButton;
+
+    private View deadlineTimeContainer;
+    private TextView deadlineButton;
+
+    private ViewGroup closedTimeContainer;
+    private TextView closedText;
+
+    private LinearLayout propertiesContainer;
 
     private ToggleButton editSwitch;
     private EditText bodyEdit;
-    private TextView bodyView;
+    private TextViewWithMarkup bodyView;
 
     /** Used to switch to note-does-not-exist view, if the note has been deleted. */
     private ViewFlipper mViewFlipper;
@@ -137,18 +152,36 @@ public class NoteFragment extends Fragment
 
     private AlertDialog dialog;
 
-    public static NoteFragment getInstance(boolean isNew, long bookId, long noteId, Place place, String initialTitle, String initialContent) {
+    public static NoteFragment forSharedNote(long bookId, String title, String content) {
+        return getInstance(true, bookId, 0, Place.UNSPECIFIED, title, content);
+    }
+
+    public static NoteFragment forBook(boolean isNew, long bookId, long noteId, Place place) {
+        return getInstance(isNew, bookId, noteId, place, null, null);
+    }
+
+    private static NoteFragment getInstance(boolean isNew, long bookId, long noteId, Place place, String initialTitle, String initialContent) {
         NoteFragment fragment = new NoteFragment();
+
         Bundle args = new Bundle();
 
         args.putBoolean(ARG_IS_NEW, isNew);
 
         args.putLong(ARG_BOOK_ID, bookId);
-        if (noteId > 0) args.putLong(ARG_NOTE_ID, noteId);
+
+        if (noteId > 0) {
+            args.putLong(ARG_NOTE_ID, noteId);
+        }
+
         args.putString(ARG_PLACE, place.toString());
 
-        if (initialTitle   != null) args.putString(ARG_TITLE, initialTitle);
-        if (initialContent != null) args.putString(ARG_CONTENT, initialContent);
+        if (initialTitle != null) {
+            args.putString(ARG_TITLE, initialTitle);
+        }
+
+        if (initialContent != null) {
+            args.putString(ARG_CONTENT, initialContent);
+        }
 
         fragment.setArguments(args);
 
@@ -202,43 +235,55 @@ public class NoteFragment extends Fragment
         final View top = inflater.inflate(R.layout.fragment_note, container, false);
 
 
-        scrollView = top.findViewById(R.id.fragment_note_container);
-
-        mTitleView = top.findViewById(R.id.fragment_note_title);
+        title = top.findViewById(R.id.fragment_note_title);
 
         /*
          * Only works when set from code.
          * We want imeOptions="actionDone", so we can't use textMultiLine.
          */
-        mTitleView.setHorizontallyScrolling(false);
-        mTitleView.setMaxLines(3);
+        title.setHorizontallyScrolling(false);
+        title.setMaxLines(3);
 
         /* Keyboard's action button pressed. */
-        mTitleView.setOnEditorActionListener((v, actionId, event) -> {
+        title.setOnEditorActionListener((v, actionId, event) -> {
             save();
             return true;
         });
 
-        mTagsView = top.findViewById(R.id.fragment_note_tags);
+        locationView = top.findViewById(R.id.fragment_note_location);
+        locationButtonView = top.findViewById(R.id.fragment_note_location_button);
 
-        mTagsView.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus && mTagsView.getAdapter() == null) {
+        if (getActivity() instanceof ShareActivity) {
+            locationView.setVisibility(View.GONE);
+            locationButtonView.setVisibility(View.VISIBLE);
+            locationButtonView.setOnClickListener(this);
+        } else {
+            locationView.setVisibility(View.VISIBLE);
+            locationButtonView.setVisibility(View.GONE);
+        }
+
+        tagsContainer = top.findViewById(R.id.fragment_note_tags_container);
+
+        tagsView = top.findViewById(R.id.fragment_note_tags);
+
+        tagsView.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus && tagsView.getAdapter() == null) {
                 setupTagsViewAdapter();
             }
         });
 
         /* Hint causes minimum width - when tags' width is smaller then hint's, there is empty space. */
-        mTagsView.addTextChangedListener(new TextWatcher() {
+        tagsView.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (!TextUtils.isEmpty(mTagsView.getText().toString())) {
-                    mTagsView.setHint("");
+                if (!TextUtils.isEmpty(tagsView.getText().toString())) {
+                    tagsView.setHint("");
                 } else {
-                    mTagsView.setHint(R.string.fragment_note_tags_hint);
+                    tagsView.setHint(R.string.fragment_note_tags_hint);
                 }
             }
 
@@ -247,43 +292,48 @@ public class NoteFragment extends Fragment
             }
         });
 
-        mPriority = top.findViewById(R.id.fragment_note_priority_button);
-        mPriority.setOnClickListener(this);
+        priorityContainer = top.findViewById(R.id.fragment_note_priority_container);
+        priority = top.findViewById(R.id.fragment_note_priority_button);
+        priority.setOnClickListener(this);
 
-        mState = top.findViewById(R.id.fragment_note_state_button);
-        mState.setOnClickListener(this);
+        stateContainer = top.findViewById(R.id.fragment_note_state_container);
+        state = top.findViewById(R.id.fragment_note_state_button);
+        state.setOnClickListener(this);
 
-        mScheduledButton = top.findViewById(R.id.fragment_note_scheduled_button);
-        mScheduledButton.setOnClickListener(this);
+        scheduledTimeContainer = top.findViewById(R.id.fragment_note_scheduled_time_container);
+        scheduledButton = top.findViewById(R.id.fragment_note_scheduled_button);
+        scheduledButton.setOnClickListener(this);
 
-        mDeadlineButton = top.findViewById(R.id.fragment_note_deadline_button);
-        mDeadlineButton.setOnClickListener(this);
+        deadlineTimeContainer = top.findViewById(R.id.fragment_note_deadline_time_container);
+        deadlineButton = top.findViewById(R.id.fragment_note_deadline_button);
+        deadlineButton.setOnClickListener(this);
 
-        mClosedButton = top.findViewById(R.id.fragment_note_closed_button);
-        mClosedButton.setOnClickListener(this);
+        closedTimeContainer = top.findViewById(R.id.fragment_note_closed_time_container);
+        closedText = top.findViewById(R.id.fragment_note_closed_edit_text);
+        closedText.setOnClickListener(this);
 
-        propertyList = top.findViewById(R.id.property_list);
-        addProperty = top.findViewById(R.id.add_property);
-        addProperty.setOnClickListener(this);
+        propertiesContainer = top.findViewById(R.id.fragment_note_properties_container);
 
         bodyEdit = top.findViewById(R.id.body_edit);
 
         bodyView = top.findViewById(R.id.body_view);
 
-//        bodyView.setOnTouchListener(new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//                editMode(true, true);
-//                return false;
-//            }
-//        });
+        bodyView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
-//        bodyView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                editMode(true, true);
-//            }
-//        });
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // Update bodyEdit text when checkboxes are clicked
+                CharSequence text = bodyView.getRawText();
+                bodyEdit.setText(text);
+            }
+        });
 
         if (getActivity() != null && AppPreferences.isFontMonospaced(getContext())) {
             bodyEdit.setTypeface(Typeface.MONOSPACE);
@@ -303,32 +353,20 @@ public class NoteFragment extends Fragment
             } else {
                 bodyEdit.setVisibility(View.GONE);
 
-                bodyView.setText(OrgFormatter.INSTANCE.parse(bodyEdit.getText().toString(), getContext()));
+                bodyView.setRawText(bodyEdit.getText());
                 bodyView.setVisibility(View.VISIBLE);
 
-                ActivityUtils.INSTANCE.closeSoftKeyboard(getActivity());
+                ActivityUtils.closeSoftKeyboard(getActivity());
             }
-
         });
 
         editSwitch.setOnClickListener(view -> {
             if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, editSwitch.isChecked());
 
             if (editSwitch.isChecked()) { // Clicked to edit content
-                ActivityUtils.INSTANCE.openSoftKeyboard(getActivity(), bodyEdit);
-
-//                    new Handler().postDelayed(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            scrollView.requestChildFocus(bodyEdit, bodyEdit);
-//                        }
-//                    }, 500);
-
-            } else { // Clicked to finish editing content
-                scrollView.smoothScrollTo(0, 0);
+                ActivityUtils.openSoftKeyboard(getActivity(), bodyEdit);
             }
         });
-
 
         mViewFlipper = top.findViewById(R.id.fragment_note_view_flipper);
 
@@ -339,7 +377,7 @@ public class NoteFragment extends Fragment
      * Note -> Bundle
      */
     private void updateBundleFromNote(Bundle outState) {
-        OrgHead head = mNote.getHead();
+        OrgHead head = note.getHead();
 
         outState.putString(ARG_CURRENT_STATE, head.getState());
         outState.putString(ARG_CURRENT_PRIORITY, head.getPriority());
@@ -379,7 +417,7 @@ public class NoteFragment extends Fragment
      * Bundle -> Note
      */
     private void updateNoteFromBundle(Bundle savedInstanceState) {
-        OrgHead head = mNote.getHead();
+        OrgHead head = note.getHead();
 
         head.setState(savedInstanceState.getString(ARG_CURRENT_STATE));
         head.setPriority(savedInstanceState.getString(ARG_CURRENT_PRIORITY));
@@ -427,29 +465,29 @@ public class NoteFragment extends Fragment
      * Note -> Views
      */
     private void updateViewsFromNote() {
-        OrgHead head = mNote.getHead();
+        OrgHead head = note.getHead();
 
         setStateView(head.getState());
 
         setPriorityView(head.getPriority());
 
         /* Title. */
-        mTitleView.setText(head.getTitle());
+        title.setText(head.getTitle());
 
         /* Tags. */
         if (head.hasTags()) {
-            mTagsView.setText(TextUtils.join(" ", head.getTags()));
+            tagsView.setText(TextUtils.join(" ", head.getTags()));
         } else {
-            mTagsView.setText(null);
+            tagsView.setText(null);
         }
 
         /* Times. */
-        updateTimestampView(TimeType.SCHEDULED, mScheduledButton, head.getScheduled());
-        updateTimestampView(TimeType.DEADLINE, mDeadlineButton, head.getDeadline());
-        updateTimestampView(TimeType.CLOSED, mClosedButton, head.getClosed());
+        updateTimestampView(TimeType.SCHEDULED, head.getScheduled());
+        updateTimestampView(TimeType.DEADLINE, head.getDeadline());
+        updateTimestampView(TimeType.CLOSED, head.getClosed());
 
         /* Properties. */
-        propertyList.removeAllViews();
+        propertiesContainer.removeAllViews();
         if (head.hasProperties()) {
             OrgProperties properties = head.getProperties();
             for (String name: properties.keySet()) {
@@ -457,54 +495,91 @@ public class NoteFragment extends Fragment
                 addPropertyToList(name, value);
             }
         }
+        addPropertyToList(null, null);
 
         /* Content. */
         bodyEdit.setText(head.getContent());
-        bodyView.setText(OrgFormatter.INSTANCE.parse(head.getContent(), getContext()));
+        bodyView.setRawText(head.getContent());
     }
 
     private void addPropertyToList(String propName, String propValue) {
-        final ViewGroup propView = (ViewGroup) View.inflate(getActivity(), R.layout.note_property, null);
+        View.inflate(getActivity(), R.layout.fragment_note_property, propertiesContainer);
 
-        final TextView name  = propView.findViewById(R.id.name);
-        final TextView value = propView.findViewById(R.id.value);
+        final ViewGroup propView = lastProperty();
+
+        final EditText name  = propView.findViewById(R.id.name);
+        final EditText value = propView.findViewById(R.id.value);
         final View delete = propView.findViewById(R.id.delete);
 
         if (propName != null && propValue != null) { // Existing property
             name.setText(propName);
             value.setText(propValue);
-
-        } else { // User creating new property
-            Activity activity = getActivity();
-            if (activity != null) {
-                ActivityUtils.INSTANCE.openSoftKeyboard(activity, name);
-            }
         }
 
-        delete.setOnClickListener(view -> propertyList.removeView(propView));
+        delete.setOnClickListener(view -> {
+            if (isOnlyProperty(propView) || isLastProperty(propView)) {
+                name.setText(null);
+                value.setText(null);
+            } else {
+                propertiesContainer.removeView(propView);
+            }
+        });
 
-        propertyList.addView(propView);
+        /*
+         * Add new empty property if last one is being edited.
+         */
+        TextWatcher textWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (isLastProperty(propView) && !TextUtils.isEmpty(s)) {
+                    addPropertyToList(null, null);
+                }
+            }
+        };
+
+        name.addTextChangedListener(textWatcher);
+        value.addTextChangedListener(textWatcher);
+    }
+
+    private boolean isLastProperty(View view) {
+        return lastProperty() == view;
+    }
+
+    private boolean isOnlyProperty(View view) {
+        return propertiesContainer.getChildCount() == 1 && propertiesContainer.getChildAt(0) == view;
+    }
+
+    private ViewGroup lastProperty() {
+        return (ViewGroup) propertiesContainer.getChildAt(propertiesContainer.getChildCount() - 1);
     }
 
     /**
      * Views -> Note  (Only those fields which are not updated when views are.)
      */
     private void updateNoteFromViews() {
-        OrgHead head = mNote.getHead();
+        OrgHead head = note.getHead();
 
-        head.setState(mState.getTag() != null ? (String) mState.getTag() : null);
+        head.setState(TextUtils.isEmpty(state.getText()) ? null : state.getText().toString());
 
-        head.setPriority(mPriority.getTag() != null ? (String) mPriority.getTag() : null);
+        head.setPriority(TextUtils.isEmpty(priority.getText()) ? null : priority.getText().toString());
 
         /* Replace new lines with spaces, in case multi-line text has been pasted. */
-        head.setTitle(mTitleView.getText().toString().replaceAll("\n", " ").trim());
+        head.setTitle(title.getText().toString().replaceAll("\n", " ").trim());
 
-        head.setTags(mTagsView.getText().toString().split("\\s+"));
+        head.setTags(tagsView.getText().toString().split("\\s+"));
 
         /* Add properties. */
         head.removeProperties();
-        for (int i = 0; i < propertyList.getChildCount(); i++){
-            View property = propertyList.getChildAt(i);
+        for (int i = 0; i < propertiesContainer.getChildCount(); i++) {
+            View property = propertiesContainer.getChildAt(i);
 
             CharSequence name = ((TextView) property.findViewById(R.id.name)).getText();
             CharSequence value = ((TextView) property.findViewById(R.id.value)).getText();
@@ -528,13 +603,16 @@ public class NoteFragment extends Fragment
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, savedInstanceState);
         super.onActivityCreated(savedInstanceState);
 
-        if (mBookId != 0) {
-            mBook = mShelf.getBook(mBookId); // FIXME: ANR reported
+        book = mShelf.getBook(mBookId); // FIXME: ANR reported
+
+        if (book != null) {
+            locationView.setText(BookUtils.getFragmentTitleForBook(book));
+            locationButtonView.setText(BookUtils.getFragmentTitleForBook(book));
         }
 
         if (mIsNew) { /* Creating new note. */
-            mNote = new Note();
-            mNote.getPosition().setBookId(mBookId);
+            note = new Note();
+            note.getPosition().setBookId(mBookId);
 
             updateNewNoteValues();
 
@@ -546,24 +624,29 @@ public class NoteFragment extends Fragment
              * some initial values (for example from ShareActivity).
              */
             if (TextUtils.isEmpty(mInitialTitle) && TextUtils.isEmpty(mInitialContent)) {
-                ActivityUtils.INSTANCE.openSoftKeyboard(getActivity(), mTitleView);
+                ActivityUtils.openSoftKeyboard(getActivity(), title);
             }
 
         } else { /* Get existing note from database. */
-            mNote = mShelf.getNote(mNoteId);
+            note = mShelf.getNote(mNoteId);
 
-            if (mNote != null) {
+            if (note != null) {
                 // TODO: Cleanup: getNote(id, withProperties) or such
-                mNote.getHead().setProperties(mShelf.getNoteProperties(mNoteId));
+                note.getHead().setProperties(mShelf.getNoteProperties(mNoteId));
 
                 mViewFlipper.setDisplayedChild(0);
+
+                // If there is no content, start in edit mode
+                if (!note.getHead().hasContent()) {
+                    editSwitch.setChecked(true);
+                }
 
             } else {
                 mViewFlipper.setDisplayedChild(1);
             }
         }
 
-        if (mNote != null) {
+        if (note != null) {
             /* Get current values from saved Bundle and populate all views. */
             if (savedInstanceState != null) {
                 updateNoteFromBundle(savedInstanceState);
@@ -574,8 +657,8 @@ public class NoteFragment extends Fragment
         }
 
         /* Store the hash value of original note. */
-        if (!getArguments().containsKey(ARG_ORIGINAL_NOTE_HASH) && mNote != null) {
-            getArguments().putLong(ARG_ORIGINAL_NOTE_HASH, noteHash(mNote));
+        if (!getArguments().containsKey(ARG_ORIGINAL_NOTE_HASH) && note != null) {
+            getArguments().putLong(ARG_ORIGINAL_NOTE_HASH, noteHash(note));
         }
 
         /* Refresh action bar items (hide or display, depending on if book is loaded. */
@@ -597,8 +680,8 @@ public class NoteFragment extends Fragment
                 ArrayAdapter<String> adapter = new ArrayAdapter<>(context, R.layout.dropdown_item, knownTags);
 
                 App.EXECUTORS.getMainThread().execute(() -> {
-                    mTagsView.setAdapter(adapter);
-                    mTagsView.setTokenizer(new SpaceTokenizer());
+                    tagsView.setAdapter(adapter);
+                    tagsView.setTokenizer(new SpaceTokenizer());
                 });
             }
         });
@@ -610,14 +693,16 @@ public class NoteFragment extends Fragment
         super.onResume();
 
         announceChangesToActivity();
+
+        setMetadataVisibility();
     }
 
     private void announceChangesToActivity() {
         if (mListener != null) {
             mListener.announceChanges(
                     NoteFragment.FRAGMENT_TAG,
-                    BookUtils.getFragmentTitleForBook(mBook),
-                    BookUtils.getFragmentSubtitleForBook(getContext(), mBook),
+                    BookUtils.getFragmentTitleForBook(book),
+                    BookUtils.getFragmentSubtitleForBook(getContext(), book),
                     0);
         }
     }
@@ -635,7 +720,7 @@ public class NoteFragment extends Fragment
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, outState);
         super.onSaveInstanceState(outState);
 
-        if (mNote != null) {
+        if (note != null) {
             updateNoteFromViews();
             updateBundleFromNote(outState);
         }
@@ -701,7 +786,7 @@ public class NoteFragment extends Fragment
         /* It's possible that note does not exist
          * if it has been deleted and the user went back to it.
          */
-        if (mNote != null && isNoteModified()) {
+        if (note != null && isNoteModified()) {
             dialog = new AlertDialog.Builder(getContext())
                     .setTitle(R.string.note_has_been_modified)
                     .setMessage(R.string.discard_or_save_changes)
@@ -720,22 +805,22 @@ public class NoteFragment extends Fragment
 
     public boolean isNoteModified() {
 
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Pre: State from view tag: " + mState.getTag());
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Pre: State from note    : " + mNote.getHead().getState());
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Pre: State from view tag: " + state.getText());
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Pre: State from note    : " + note.getHead().getState());
 
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Pre: Prio from view tag: " + mPriority.getTag());
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Pre: Prio from note    : " + mNote.getHead().getPriority());
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Pre: Prio from view tag: " + priority.getText());
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Pre: Prio from note    : " + note.getHead().getPriority());
 
         updateNoteFromViews();
 
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Post: State from view tag: " + mState.getTag());
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Post: State from note    : " + mNote.getHead().getState());
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Post: State from view tag: " + state.getText());
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Post: State from note    : " + note.getHead().getState());
 
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Post: Prio from view tag: " + mPriority.getTag());
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Post: Prio from note    : " + mNote.getHead().getPriority());
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Post: Prio from view tag: " + priority.getText());
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Post: Prio from note    : " + note.getHead().getPriority());
 
 
-        long currentHash = noteHash(mNote);
+        long currentHash = noteHash(note);
         long originalHash = getArguments().getLong(ARG_ORIGINAL_NOTE_HASH);
 
         return currentHash != originalHash;
@@ -753,13 +838,21 @@ public class NoteFragment extends Fragment
 
     private enum TimeType { SCHEDULED, DEADLINE, CLOSED, CLOCKED }
 
-    private void updateTimestampView(TimeType timeType, TextView button, OrgRange range) {
+    private void updateTimestampView(TimeType timeType, OrgRange range) {
         switch (timeType) {
             case SCHEDULED:
                 if (range != null) {
-                    button.setText(mUserTimeFormatter.formatAll(range));
+                    scheduledButton.setText(mUserTimeFormatter.formatAll(range));
                 } else {
-                    button.setText(getString(R.string.schedule_button_hint));
+                    scheduledButton.setText(null);
+                }
+                break;
+
+            case DEADLINE:
+                if (range != null) {
+                    deadlineButton.setText(mUserTimeFormatter.formatAll(range));
+                } else {
+                    deadlineButton.setText(null);
                 }
                 break;
 
@@ -769,18 +862,10 @@ public class NoteFragment extends Fragment
                  * It will be updated on state change.
                  */
                 if (range != null) {
-                    button.setText(mUserTimeFormatter.formatAll(range));
-                    button.setVisibility(View.VISIBLE);
+                    closedText.setText(mUserTimeFormatter.formatAll(range));
+                    closedTimeContainer.setVisibility(View.VISIBLE);
                 } else {
-                    button.setVisibility(View.GONE);
-                }
-                break;
-
-            case DEADLINE:
-                if (range != null) {
-                    button.setText(mUserTimeFormatter.formatAll(range));
-                } else {
-                    button.setText(getString(R.string.deadline_button_hint));
+                    closedTimeContainer.setVisibility(View.GONE);
                 }
                 break;
         }
@@ -790,7 +875,7 @@ public class NoteFragment extends Fragment
      * Set new Note's initial values.
      */
     private void updateNewNoteValues() {
-        OrgHead head = mNote.getHead();
+        OrgHead head = note.getHead();
 
         /* Set scheduled time for a new note. */
         if (AppPreferences.isNewNoteScheduled(getContext())) {
@@ -810,7 +895,7 @@ public class NoteFragment extends Fragment
 
         /* Set state for a new note. */
         String stateKeyword = AppPreferences.newNoteState(getContext());
-        if (NoteStates.Companion.isKeyword(stateKeyword)) {
+        if (NoteStates.isKeyword(stateKeyword)) {
             head.setState(stateKeyword);
         } else {
             head.setState(null);
@@ -841,26 +926,56 @@ public class NoteFragment extends Fragment
         DialogFragment f = null;
 
         switch (view.getId()) {
+            case R.id.fragment_note_location_button:
+                List<Book> books = getBooksList();
+
+                String[] bookNames = new String[books.size()];
+                for (int i = 0; i < books.size(); i++) {
+                    bookNames[i] = books.get(i).getName();
+                }
+
+                int selected = getSelectedBook(books, mBookId);
+
+                dialog = new AlertDialog.Builder(getContext())
+                        .setTitle(R.string.state)
+                        .setSingleChoiceItems(bookNames, selected, (dialog, which) -> {
+                            Book book = books.get(which);
+
+                            if (book != null) {
+                                if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Setting book for fragment", book);
+                                setBook(book);
+                            }
+
+
+                            dialog.dismiss();
+                        })
+                        .setNegativeButton(R.string.cancel, null)
+                        .create();
+
+                dialog.show();
+
+                break;
+
             case R.id.fragment_note_state_button:
-                NoteStates states = NoteStates.Companion.fromPreferences(getContext());
+                NoteStates states = NoteStates.fromPreferences(getContext());
 
                 String[] keywords = states.getArray();
 
                 int currentState = -1;
-                if (mState.getTag() != null) {
-                    currentState = states.indexOf((String) mState.getTag());
+                if (!TextUtils.isEmpty(state.getText())) {
+                    currentState = states.indexOf(state.getText().toString());
                 }
 
                 dialog = new AlertDialog.Builder(getContext())
                         .setTitle(R.string.state)
                         .setSingleChoiceItems(keywords, currentState, (dialog, which) -> {
                             // On state change - update state and timestamps
-                            updateNoteForStateChange(getActivity(), mNote, states.get(which));
+                            setState(note, states.get(which));
                             dialog.dismiss();
                         })
                         .setNeutralButton(R.string.clear, (dialog, which) -> {
                             // On state change - update state and timestamps
-                            updateNoteForStateChange(getActivity(), mNote, NoteStates.NO_STATE_KEYWORD);
+                            setState(note, NoteStates.NO_STATE_KEYWORD);
                         })
                         .setNegativeButton(R.string.cancel, null)
                         .create();
@@ -870,13 +985,13 @@ public class NoteFragment extends Fragment
                 break;
 
             case R.id.fragment_note_priority_button:
-                NotePriorities priorities = NotePriorities.Companion.fromPreferences(getContext());
+                NotePriorities priorities = NotePriorities.fromPreferences(getContext());
 
                 keywords = priorities.getArray();
 
                 int currentPriority = -1;
-                if (mPriority.getTag() != null) {
-                    currentPriority = priorities.indexOf((String) mPriority.getTag());
+                if (!TextUtils.isEmpty(priority.getText())) {
+                    currentPriority = priorities.indexOf(priority.getText().toString());
                 }
 
                 dialog = new AlertDialog.Builder(getContext())
@@ -898,8 +1013,8 @@ public class NoteFragment extends Fragment
                 f = TimestampDialogFragment.getInstance(
                         R.id.fragment_note_scheduled_button,
                         R.string.schedule,
-                        mNote.getId(),
-                        mNote.getHead().getScheduled() != null ? mNote.getHead().getScheduled().getStartTime() : null);
+                        note.getId(),
+                        note.getHead().getScheduled() != null ? note.getHead().getScheduled().getStartTime() : null);
                 break;
 
             /* Setting deadline time. */
@@ -907,54 +1022,96 @@ public class NoteFragment extends Fragment
                 f = TimestampDialogFragment.getInstance(
                         R.id.fragment_note_deadline_button,
                         R.string.deadline,
-                        mNote.getId(),
-                        mNote.getHead().getDeadline() != null ? mNote.getHead().getDeadline().getStartTime() : null);
+                        note.getId(),
+                        note.getHead().getDeadline() != null ? note.getHead().getDeadline().getStartTime() : null);
                 break;
 
             /* Setting closed time. */
-            case R.id.fragment_note_closed_button:
+            case R.id.fragment_note_closed_edit_text:
                 f = TimestampDialogFragment.getInstance(
-                        R.id.fragment_note_closed_button,
+                        R.id.fragment_note_closed_edit_text,
                         R.string.closed,
-                        mNote.getId(),
-                        mNote.getHead().getClosed() != null ? mNote.getHead().getClosed().getStartTime() : null);
-                break;
-
-            /* New property. */
-            case R.id.add_property:
-                /* Add new property with empty name and value. */
-                addPropertyToList(null, null);
+                        note.getId(),
+                        note.getHead().getClosed() != null ? note.getHead().getClosed().getStartTime() : null);
                 break;
         }
 
         if (f != null) {
-            f.setTargetFragment(this, 0);
-            f.show(getActivity().getSupportFragmentManager(), TimestampDialogFragment.FRAGMENT_TAG);
+            f.show(getChildFragmentManager(), TimestampDialogFragment.FRAGMENT_TAG);
         }
+    }
+
+    private List<Book> getBooksList() {
+        List<Book> books = mShelf.getBooks();
+
+        if (books.size() == 0) {
+            try {
+                Book book = mShelf.createBook(AppPreferences.shareNotebook(getContext()));
+                books.add(book);
+            } catch (IOException e) {
+                // TODO: Test and handle better.
+                e.printStackTrace();
+            }
+        }
+
+        return books;
+    }
+
+    private Book createDefaultBook() {
+        try {
+            return mShelf.createBook(AppPreferences.shareNotebook(getContext()));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private int getSelectedBook(List<Book> books, long bookId) {
+        int selected = -1;
+
+        if (bookId != -1) {
+            for (int i = 0; i < books.size(); i++) {
+                if (books.get(i).getId() == bookId) {
+                    selected = i;
+                    break;
+                }
+            }
+
+        } else {
+            String defaultBookName = AppPreferences.shareNotebook(getContext());
+            for (int i = 0; i < books.size(); i++) {
+                if (defaultBookName.equals(books.get(i).getName())) {
+                    selected = i;
+                    break;
+                }
+            }
+        }
+
+        return selected;
     }
 
     @Override /* TimestampDialog */
     public void onDateTimeSet(int id, TreeSet<Long> noteIds, OrgDateTime time) {
-        if (mNote == null) {
+        if (note == null) {
             return;
         }
 
-        OrgHead head = mNote.getHead();
+        OrgHead head = note.getHead();
         OrgRange range = new OrgRange(time);
 
         switch (id) {
             case R.id.fragment_note_scheduled_button:
-                updateTimestampView(TimeType.SCHEDULED, mScheduledButton, range);
+                updateTimestampView(TimeType.SCHEDULED, range);
                 head.setScheduled(range);
                 break;
 
             case R.id.fragment_note_deadline_button:
-                updateTimestampView(TimeType.DEADLINE, mDeadlineButton, range);
+                updateTimestampView(TimeType.DEADLINE, range);
                 head.setDeadline(range);
                 break;
 
-            case R.id.fragment_note_closed_button:
-                updateTimestampView(TimeType.CLOSED, mClosedButton, range);
+            case R.id.fragment_note_closed_edit_text:
+                updateTimestampView(TimeType.CLOSED, range);
                 head.setClosed(range);
                 break;
         }
@@ -962,25 +1119,25 @@ public class NoteFragment extends Fragment
 
     @Override /* TimestampDialog */
     public void onDateTimeCleared(int id, TreeSet<Long> noteIds) {
-        if (mNote == null) {
+        if (note == null) {
             return;
         }
 
-        OrgHead head = mNote.getHead();
+        OrgHead head = note.getHead();
 
         switch (id) {
             case R.id.fragment_note_scheduled_button:
-                updateTimestampView(TimeType.SCHEDULED, mScheduledButton, null);
+                updateTimestampView(TimeType.SCHEDULED, null);
                 head.setScheduled(null);
                 break;
 
             case R.id.fragment_note_deadline_button:
-                updateTimestampView(TimeType.DEADLINE, mDeadlineButton, null);
+                updateTimestampView(TimeType.DEADLINE, null);
                 head.setDeadline(null);
                 break;
 
-            case R.id.fragment_note_closed_button:
-                updateTimestampView(TimeType.CLOSED, mClosedButton, null);
+            case R.id.fragment_note_closed_edit_text:
+                updateTimestampView(TimeType.CLOSED, null);
                 head.setClosed(null);
                 break;
         }
@@ -990,23 +1147,38 @@ public class NoteFragment extends Fragment
     public void onDateTimeAborted(int id, TreeSet<Long> noteIds) {
     }
 
-	/*
-	 * Options Menu.
-	 */
+    /*
+     * Options Menu.
+     */
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, menu, inflater);
 
-        inflater.inflate(R.menu.close_done_delete, menu);
+        inflater.inflate(R.menu.note_actions, menu);
 
         /* Remove search item. */
         menu.removeItem(R.id.activity_action_search);
 
-        if (mNote == null) { // Displaying non-existent note.
+        if (note == null) { // Displaying non-existent note.
             menu.removeItem(R.id.close);
             menu.removeItem(R.id.done);
+            menu.removeItem(R.id.hide_metadata);
             menu.removeItem(R.id.delete);
+
+        } else {
+            String metadataVisibility = AppPreferences.noteMetadataVisibility(getContext());
+
+            if ("all".equals(metadataVisibility)) {
+                menu.findItem(R.id.metadata_show_all).setChecked(true);
+            } else if ("none".equals(metadataVisibility)) {
+                menu.findItem(R.id.metadata_show_none).setChecked(true);
+            } else {
+                menu.findItem(R.id.metadata_show_selected).setChecked(true);
+            }
+
+            menu.findItem(R.id.metadata_always_show_set)
+                    .setChecked(AppPreferences.alwaysShowSetNoteMetadata(getContext()));
         }
 
         /* Newly created note cannot be deleted. */
@@ -1028,7 +1200,30 @@ public class NoteFragment extends Fragment
                 if (!isAskingForConfirmationForModifiedNote()) {
                     cancel();
                 }
+                return true;
 
+            case R.id.metadata_show_all:
+                item.setChecked(true);
+                AppPreferences.noteMetadataVisibility(getContext(), "all");
+                setMetadataVisibility();
+                return true;
+
+            case R.id.metadata_show_selected:
+                item.setChecked(true);
+                AppPreferences.noteMetadataVisibility(getContext(), "selected");
+                setMetadataVisibility();
+                return true;
+
+            case R.id.metadata_show_none:
+                item.setChecked(true);
+                AppPreferences.noteMetadataVisibility(getContext(), "none");
+                setMetadataVisibility();
+                return true;
+
+            case R.id.metadata_always_show_set:
+                item.setChecked(!item.isChecked());
+                AppPreferences.alwaysShowSetNoteMetadata(getContext(), item.isChecked());
+                setMetadataVisibility();
                 return true;
 
             case R.id.delete:
@@ -1040,13 +1235,66 @@ public class NoteFragment extends Fragment
         }
     }
 
+    private void setMetadataVisibility() {
+        setMetadataVisibility(
+                "tags",
+                tagsContainer,
+                !TextUtils.isEmpty(tagsView.getText()));
+
+        setMetadataVisibility(
+                "state",
+                stateContainer,
+                !TextUtils.isEmpty(state.getText()));
+
+        setMetadataVisibility(
+                "priority",
+                priorityContainer,
+                !TextUtils.isEmpty(priority.getText()));
+
+        setMetadataVisibility(
+                "scheduled_time",
+                scheduledTimeContainer,
+                !TextUtils.isEmpty(scheduledButton.getText()));
+
+        setMetadataVisibility(
+                "deadline_time",
+                deadlineTimeContainer,
+                !TextUtils.isEmpty(deadlineButton.getText()));
+
+        setMetadataVisibility(
+                "properties",
+                propertiesContainer,
+                propertiesContainer.getChildCount() > 1);
+
+        setMetadataVisibility(
+                null,
+                lastProperty(),
+                false);
+    }
+
+    private void setMetadataVisibility(String name, View container, boolean isSet) {
+        Context context = getContext();
+
+        if (context != null) {
+            String visibility = AppPreferences.noteMetadataVisibility(context);
+            Set<String> selected = AppPreferences.selectedNoteMetadata(context);
+            boolean showSet = AppPreferences.alwaysShowSetNoteMetadata(context);
+
+            boolean isVisible = "all".equals(visibility)
+                                || ("selected".equals(visibility) && name != null && selected.contains(name))
+                                || (showSet && isSet);
+
+            container.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+        }
+    }
+
     private void delete() {
         dialog = new AlertDialog.Builder(getContext())
                 .setTitle(R.string.delete_note)
                 .setMessage(R.string.delete_note_and_all_subnotes)
                 .setPositiveButton(R.string.delete, (dialog, which) -> {
                     if (mListener != null) {
-                        mListener.onNoteDeleteRequest(mNote);
+                        mListener.onNoteDeleteRequest(note);
                     }
                 })
                 .setNegativeButton(R.string.cancel, (dialog, which) -> { })
@@ -1056,16 +1304,16 @@ public class NoteFragment extends Fragment
 
     private void cancel() {
         if (mListener != null) {
-            mListener.onNoteCancelRequest(mNote);
+            mListener.onNoteCancelRequest(note);
         }
     }
 
     private void save() {
         /* Make sure notebook is set. */
-        if (mNote.getPosition().getBookId() == 0) {
+        if (note.getPosition().getBookId() == 0) {
             Activity activity = getActivity();
             if (activity != null) {
-                ((CommonActivity) activity).showSimpleSnackbarLong(R.string.note_book_not_set);
+                ((CommonActivity) activity).showSnackbar(R.string.note_book_not_set);
             }
             return;
         }
@@ -1073,14 +1321,14 @@ public class NoteFragment extends Fragment
         if (updateNoteFromViewsAndVerify()) {
             if (mListener != null) {
                 if (mIsNew) { // New note
-                    mListener.onNoteCreateRequest(mNote, place != Place.UNSPECIFIED ?
-                            new NotePlace(mNote.getPosition().getBookId(), mNoteId, place) : null);
+                    mListener.onNoteCreateRequest(note, place != Place.UNSPECIFIED ?
+                            new NotePlace(note.getPosition().getBookId(), mNoteId, place) : null);
 
                 } else { // Existing note
                     if (isNoteModified()) {
-                        mListener.onNoteUpdateRequest(mNote);
+                        mListener.onNoteUpdateRequest(note);
                     } else {
-                        mListener.onNoteCancelRequest(mNote);
+                        mListener.onNoteCancelRequest(note);
                     }
                 }
             }
@@ -1093,8 +1341,8 @@ public class NoteFragment extends Fragment
     }
 
     private boolean isTitleValid() {
-        if (TextUtils.isEmpty(mNote.getHead().getTitle())) {
-            CommonActivity.Companion.showSnackbar(getContext(), getString(R.string.title_can_not_be_empty));
+        if (TextUtils.isEmpty(note.getHead().getTitle())) {
+            CommonActivity.showSnackbar(getContext(), getString(R.string.title_can_not_be_empty));
             return false;
         } else {
             return true;
@@ -1105,13 +1353,16 @@ public class NoteFragment extends Fragment
      * Updates the current book this note belongs to. Only makes sense for new notes.
      * TODO: Should be setPosition and allow filing under specific note
      */
-    public void setBook(Book book) {
+    public void setBook(Book newBook) {
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, book);
 
-        mBook = book;
+        book = newBook;
         mBookId = book.getId();
 
-        mNote.getPosition().setBookId(mBookId);
+        note.getPosition().setBookId(mBookId);
+
+        locationView.setText(BookUtils.getFragmentTitleForBook(book));
+        locationButtonView.setText(BookUtils.getFragmentTitleForBook(book));
 
         getArguments().putLong(ARG_BOOK_ID, book.getId());
     }
@@ -1120,48 +1371,57 @@ public class NoteFragment extends Fragment
         return mNoteId;
     }
 
-    private void updateNoteForStateChange(Context context, Note note, String state) {
-        StateChangeLogic stateSetOp = new StateChangeLogic(AppPreferences.doneKeywordsSet(context));
+    /**
+     * Update state, timestamps, last-repeat and logbook.
+     */
+    private void setState(Note note, String state) {
+        updateNoteFromViews();
 
-        stateSetOp.setState(
+        String originalState = note.getHead().getState();
+
+        Set<String> doneKeywords = AppPreferences.doneKeywordsSet(getContext());
+
+        StateChangeLogic stateChangeLogic = new StateChangeLogic(doneKeywords);
+
+        stateChangeLogic.setState(
                 state,
                 note.getHead().getState(),
                 note.getHead().getScheduled(),
                 note.getHead().getDeadline());
 
-        /* Update note. */
-        note.getHead().setState(stateSetOp.getState());
-        note.getHead().setScheduled(stateSetOp.getScheduled());
-        note.getHead().setDeadline(stateSetOp.getDeadline());
-        note.getHead().setClosed(stateSetOp.getClosed());
+        note.getHead().setState(stateChangeLogic.getState());
 
-        /* Update views. */
+        note.getHead().setScheduled(stateChangeLogic.getScheduled());
+        note.getHead().setDeadline(stateChangeLogic.getDeadline());
+        note.getHead().setClosed(stateChangeLogic.getClosed());
 
-        setStateView(stateSetOp.getState());
+        if (stateChangeLogic.isShifted()) {
+            String datetime = new OrgDateTime(false).toString();
 
-        updateTimestampView(TimeType.SCHEDULED, mScheduledButton, stateSetOp.getScheduled());
-        updateTimestampView(TimeType.DEADLINE, mDeadlineButton, stateSetOp.getDeadline());
-        updateTimestampView(TimeType.CLOSED, mClosedButton, stateSetOp.getClosed());
+            if (AppPreferences.setLastRepeatOnTimeShift(getContext())) {
+                note.getHead().addProperty(OrgFormatter.LAST_REPEAT_PROPERTY, datetime);
+            }
+
+            if (AppPreferences.logOnTimeShift(getContext())) {
+                String logEntry = OrgFormatter.stateChangeLine(originalState, state, datetime);
+                String content = OrgFormatter.insertLogbookEntryLine(note.getHead().getContent(), logEntry);
+                note.getHead().setContent(content);
+            }
+        }
+
+        updateViewsFromNote();
     }
 
     private void setStateView(String state) {
         if (state == null || NoteStates.NO_STATE_KEYWORD.equals(state)) {
-            mState.setText(NoteStates.NO_STATE_KEYWORD);
-            mState.setTag(null);
+            this.state.setText(null);
         } else {
-            mState.setText(state);
-            mState.setTag(state);
+            this.state.setText(state);
         }
     }
 
     private void setPriorityView(String priority) {
-        if (priority == null) {
-            mPriority.setText(getString(R.string.default_priority));
-            mPriority.setTag(null);
-        } else {
-            mPriority.setText(getString(R.string.priority_with_argument, priority));
-            mPriority.setTag(priority);
-        }
+        this.priority.setText(priority);
     }
 
     /**

@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
+import android.content.res.TypedArray;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,7 +24,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -31,10 +31,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.orgzly.BuildConfig;
@@ -65,6 +63,7 @@ import com.orgzly.android.ui.fragments.FiltersFragment;
 import com.orgzly.android.ui.fragments.NoteFragment;
 import com.orgzly.android.ui.fragments.NoteListFragment;
 import com.orgzly.android.ui.fragments.SyncFragment;
+import com.orgzly.android.ui.repos.ReposActivity;
 import com.orgzly.android.ui.settings.SettingsActivity;
 import com.orgzly.android.ui.util.ActivityUtils;
 import com.orgzly.android.util.AppPermissions;
@@ -74,8 +73,6 @@ import com.orgzly.org.datetime.OrgDateTime;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -108,20 +105,14 @@ public class MainActivity extends CommonActivity
 
     private LocalBroadcastManager broadcastManager;
 
-    private CharSequence mSavedTitle;
-    private CharSequence mSavedSubtitle;
-
-    /**
-     * Original title used when book is not being displayed.
-     */
-    private CharSequence mDefaultTitle;
-
     private ActionMode mActionMode;
     private boolean mPromoteDemoteOrMoveRequested = false;
 
     private Runnable runnableOnResumeFragments;
 
     private BroadcastReceiver receiver = new LocalBroadcastReceiver();
+
+    private AlertDialog dialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,16 +121,7 @@ public class MainActivity extends CommonActivity
 
         setContentView(R.layout.activity_main);
 
-        Toolbar myToolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(myToolbar);
-
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setHomeButtonEnabled(true);
-
-
-        mSavedTitle = mDefaultTitle = getTitle();
-        mSavedSubtitle = null;
-
+        setupActionBar();
 
         broadcastManager = LocalBroadcastManager.getInstance(this);
 
@@ -257,7 +239,7 @@ public class MainActivity extends CommonActivity
     private void drawerOpened() {
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG);
 
-        ActivityUtils.INSTANCE.closeSoftKeyboard(this);
+        ActivityUtils.closeSoftKeyboard(this);
     }
 
     private void drawerClosed() {
@@ -329,7 +311,7 @@ public class MainActivity extends CommonActivity
         if (isNewVersion) {
             /* Import Getting Started notebook. */
             if (!AppPreferences.isGettingStartedNotebookLoaded(this)) {
-                ActionService.Companion.enqueueWork(
+                ActionService.enqueueWork(
                         MainActivity.this,
                         AppIntent.ACTION_IMPORT_GETTING_STARTED_NOTEBOOK);
             }
@@ -363,6 +345,11 @@ public class MainActivity extends CommonActivity
 
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(this);
         bm.unregisterReceiver(receiver);
+
+        if (dialog != null) {
+            dialog.dismiss();
+            dialog = null;
+        }
     }
 
     @Override
@@ -524,7 +511,7 @@ public class MainActivity extends CommonActivity
                 return true;
 
             case R.id.activity_action_settings:
-                startActivity(new Intent(this, SettingsActivity.class));
+                openSettings();
                 return true;
 
             default:
@@ -640,16 +627,8 @@ public class MainActivity extends CommonActivity
     }
 
     @Override
-    public void onNoteScrollToRequest(long noteId) {
-        // TODO: Avoid using Shelf from activity directly
-        Shelf shelf = new Shelf(this);
-        Note note = shelf.getNote(noteId);
-
-        if (note != null) {
-            long bookId = note.getPosition().getBookId();
-            mSyncFragment.sparseTree(bookId, noteId);
-            DisplayManager.displayBook(getSupportFragmentManager(), bookId, noteId);
-        }
+    public void onNoteFocusInBookRequest(long noteId) {
+        mSyncFragment.focusNoteInBook(noteId);
     }
 
     /**
@@ -707,7 +686,7 @@ public class MainActivity extends CommonActivity
 
     @Override
     public void onNoteCreatingFailed() {
-        showSimpleSnackbarLong(R.string.message_failed_creating_note);
+        showSnackbar(R.string.message_failed_creating_note);
     }
 
     @Override
@@ -717,12 +696,8 @@ public class MainActivity extends CommonActivity
     }
 
     @Override
-    public void onNoteUpdated(Note note) {
-    }
-
-    @Override
     public void onNoteUpdatingFailed(Note note) {
-        showSimpleSnackbarLong(R.string.message_failed_updating_note);
+        showSnackbar(R.string.message_failed_updating_note);
     }
 
     @Override
@@ -752,13 +727,13 @@ public class MainActivity extends CommonActivity
     }
 
     @Override
-    public void onCycleVisibilityRequest(Book book) {
-        mSyncFragment.cycleVisibility(book);
+    public void onDeadlineTimeUpdateRequest(Set<Long> noteIds, OrgDateTime time) {
+        mSyncFragment.updateDeadlineTime(noteIds, time);
     }
 
     @Override
-    public void onScheduledTimeUpdated(Set<Long> noteIds, OrgDateTime time) {
-        // animateNotesAfterEdit(noteIds);
+    public void onCycleVisibilityRequest(Book book) {
+        mSyncFragment.cycleVisibility(book);
     }
 
     @Override /* BookFragment */
@@ -783,7 +758,7 @@ public class MainActivity extends CommonActivity
             message = getResources().getQuantityString(R.plurals.notes_deleted, count, count);
         }
 
-        showSimpleSnackbarLong(message);
+        showSnackbar(message);
     }
 
     @Override
@@ -801,7 +776,7 @@ public class MainActivity extends CommonActivity
             message = getResources().getQuantityString(R.plurals.notes_cut, count, count);
         }
 
-        showSimpleSnackbarLong(message);
+        showSnackbar(message);
     }
 
     /**
@@ -821,6 +796,22 @@ public class MainActivity extends CommonActivity
         CheckBox checkBox = view.findViewById(R.id.dialog_book_delete_checkbox);
         TextView textView = view.findViewById(R.id.dialog_book_delete_text);
 
+        checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            TypedArray typedArray = obtainStyledAttributes(new int[] {
+                    R.attr.text_primary_color,
+                    R.attr.text_disabled_color
+            });
+            int color;
+            if (isChecked) {
+                color = typedArray.getColor(0, 0);
+            } else {
+                color = typedArray.getColor(1, 0);
+            }
+            typedArray.recycle();
+
+            textView.setTextColor(color);
+        });
+
         DialogInterface.OnClickListener dialogClickListener = (dialog, which) -> {
             switch (which) {
                 case DialogInterface.BUTTON_POSITIVE:
@@ -838,7 +829,6 @@ public class MainActivity extends CommonActivity
         AlertDialog.Builder builder =
                 new AlertDialog.Builder(this)
                         .setTitle(getString(R.string.delete_with_quoted_argument, book.getName()))
-                        .setMessage(R.string.delete_notebook_question)
                         .setPositiveButton(R.string.delete, dialogClickListener)
                         .setNegativeButton(R.string.cancel, dialogClickListener);
 
@@ -847,8 +837,7 @@ public class MainActivity extends CommonActivity
             builder.setView(view);
         }
 
-        builder.show();
-
+        dialog = builder.show();
     }
 
     @Override
@@ -883,7 +872,7 @@ public class MainActivity extends CommonActivity
 
         name.setText(book.getName());
 
-        final AlertDialog dialog = builder.create();
+        dialog = builder.create();
 
         /* Finish on keyboard action press. */
         name.setOnEditorActionListener((v, actionId, event) -> {
@@ -894,9 +883,9 @@ public class MainActivity extends CommonActivity
 
         final Activity activity = this;
 
-        dialog.setOnShowListener(d -> ActivityUtils.INSTANCE.openSoftKeyboard(activity, name));
+        dialog.setOnShowListener(d -> ActivityUtils.openSoftKeyboard(activity, name));
 
-        dialog.setOnDismissListener(d -> ActivityUtils.INSTANCE.closeSoftKeyboard(activity));
+        dialog.setOnDismissListener(d -> ActivityUtils.closeSoftKeyboard(activity));
 
         name.addTextChangedListener(new TextWatcher() {
             @Override
@@ -942,62 +931,48 @@ public class MainActivity extends CommonActivity
             return;
         }
 
-        LinkedHashMap<String, Integer> items = new LinkedHashMap<>();
-        int itemIndex = 0;
+        String currentLink = null;
+        if (book.hasLink()) {
+            currentLink = book.getLinkRepo().toString();
+        }
 
-        /* Add "no link" item. */
-        items.put(getString(R.string.no_link), itemIndex++);
+        int checkedItem = -1;
+
+        CharSequence[] items = new CharSequence[repos.size()];
 
         /* Add repositories. */
+        int itemIndex = 0;
         for (String repoUri : repos.keySet()) {
-            items.put(repoUri, itemIndex++);
+            if (repoUri.equals(currentLink)) {
+                checkedItem = itemIndex ;
+            }
+            items[itemIndex++] = repoUri;
         }
 
-        View view = getLayoutInflater().inflate(R.layout.dialog_spinner, null, false);
-        final Spinner spinner = (Spinner) view.findViewById(R.id.dialog_spinner);
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(spinner.getContext(), R.layout.spinner_item, new ArrayList<>(items.keySet()));
-        adapter.setDropDownViewResource(R.layout.dropdown_item);
-        spinner.setAdapter(adapter);
-
-        /* Set spinner to current book's link. */
-        if (book.hasLink()) {
-            Integer pos = items.get(book.getLinkRepo().toString());
-            if (pos != null) {
-                spinner.setSelection(pos);
-            }
-        }
-
-        DialogInterface.OnClickListener dialogClickListener = (dialog, which) -> {
-            switch (which) {
-                case DialogInterface.BUTTON_POSITIVE:
-                    Shelf shelf = new Shelf(MainActivity.this);
-                    String repoUrl = (String) spinner.getSelectedItem();
-
-                    if (getString(R.string.no_link).equals(repoUrl)) {
-                        shelf.setLink(book, null);
-                    } else {
-                        shelf.setLink(book, repoUrl);
-                    }
-
-                    break;
-
-                case DialogInterface.BUTTON_NEGATIVE:
-                    break;
-            }
-        };
-
-        new AlertDialog.Builder(this)
+        dialog = new AlertDialog.Builder(this)
                 .setTitle("Link " + MiscUtils.quotedString(book.getName()) + " to repository")
-                .setView(view)
-                .setPositiveButton(R.string.set, dialogClickListener)
-                .setNegativeButton(R.string.cancel, dialogClickListener)
+                .setSingleChoiceItems(items, checkedItem, (d, which) -> {
+                    Shelf shelf = new Shelf(MainActivity.this);
+                    shelf.setLink(book, items[which].toString());
+                    dialog.dismiss();
+                    dialog = null;
+                })
+                .setNeutralButton(R.string.remove_notebook_link, (dialog, which) -> {
+                    Shelf shelf = new Shelf(MainActivity.this);
+                    shelf.setLink(book, null);
+                })
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
     @Override
     public void onForceSaveRequest(long bookId) {
-        mSyncFragment.forceSaveBook(bookId);
+        dialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.books_context_menu_item_force_save)
+                .setMessage(R.string.overwrite_remote_notebook_question)
+                .setPositiveButton(R.string.overwrite, (dialog, which) -> mSyncFragment.forceSaveBook(bookId))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     @Override
@@ -1010,7 +985,12 @@ public class MainActivity extends CommonActivity
 
     @Override
     public void onForceLoadRequest(long bookId) {
-        mSyncFragment.forceLoadBook(bookId);
+        dialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.books_context_menu_item_force_load)
+                .setMessage(R.string.overwrite_local_notebook_question)
+                .setPositiveButton(R.string.overwrite, (dialog, which) -> mSyncFragment.forceLoadBook(bookId))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     /**
@@ -1064,7 +1044,7 @@ public class MainActivity extends CommonActivity
 
     @Override /* SyncFragment */
     public void onBookCreationFailed(Exception exception) {
-        showSimpleSnackbarLong(exception.getMessage());
+        showSnackbar(exception.getMessage());
     }
 
     /**
@@ -1083,7 +1063,7 @@ public class MainActivity extends CommonActivity
 
     @Override /* SyncFragment */
     public void onBookExported(File file) {
-        showSimpleSnackbarLong(getString(R.string.book_exported, file.getAbsolutePath()));
+        showSnackbar(getString(R.string.book_exported, file.getAbsolutePath()));
     }
 
     /**
@@ -1104,7 +1084,7 @@ public class MainActivity extends CommonActivity
 
     @Override /* SyncFragment */
     public void onBookExportFailed(Exception e) {
-        showSimpleSnackbarLong(getString(R.string.failed_exporting_book, e.getLocalizedMessage()));
+        showSnackbar(getString(R.string.failed_exporting_book, e.getLocalizedMessage()));
     }
 
     @Override
@@ -1131,12 +1111,13 @@ public class MainActivity extends CommonActivity
     }
 
     @Override
-    public void onNotesMoved(int count) {
+    public void onNotesRefileRequest(long sourceBookId, Set<Long> noteIds, long targetBookId) {
+        mSyncFragment.refileNotes(sourceBookId, noteIds, targetBookId);
     }
 
     @Override
     public void onFailure(String message) {
-        showSimpleSnackbarLong(message);
+        showSnackbar(message);
     }
 
     @Override
@@ -1146,17 +1127,17 @@ public class MainActivity extends CommonActivity
                 batch.getCount(),
                 batch.getCount());
 
-        showSimpleSnackbarLong(message);
+        showSnackbar(message);
     }
 
     @Override
     public void onNotesNotPasted() {
-        showSimpleSnackbarLong(getResources().getString(R.string.no_notes_pasted));
+        showSnackbar(getResources().getString(R.string.no_notes_pasted));
     }
 
     @Override /* SyncFragment */
     public void onBookDeleted(Book book) {
-        showSimpleSnackbarLong(R.string.message_book_deleted);
+        showSnackbar(R.string.message_book_deleted);
     }
 
     @Override
@@ -1165,7 +1146,7 @@ public class MainActivity extends CommonActivity
                 R.string.message_deleting_book_failed,
                 exception.toString());
 
-        showSimpleSnackbarLong(message);
+        showSnackbar(message);
     }
 
     @Override
@@ -1299,18 +1280,13 @@ public class MainActivity extends CommonActivity
     public void announceChanges(String fragmentTag, CharSequence title, CharSequence subTitle, int selectionCount) {
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, fragmentTag, title, subTitle, selectionCount);
 
-        /* Save titles so they can be restored after drawer open/close. */
-        mSavedTitle = title != null ? title : mDefaultTitle;
-        mSavedSubtitle = subTitle;
-
-        /* Change titles. */
-        getSupportActionBar().setTitle(mSavedTitle);
-        getSupportActionBar().setSubtitle(mSavedSubtitle);
+        getSupportActionBar().setTitle(title);
+        getSupportActionBar().setSubtitle(subTitle);
 
         drawerNavigationView.updateActiveFragment(fragmentTag);
 
         /* Update floating action button. */
-        MainFab.INSTANCE.updateFab(this, fragmentTag, selectionCount);
+        MainFab.updateFab(this, fragmentTag, selectionCount);
     }
 
     @Override
@@ -1355,6 +1331,10 @@ public class MainActivity extends CommonActivity
         popBackStackAndCloseKeyboard();
     }
 
+    private void openSettings() {
+        startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+    }
+
     private class LocalBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -1392,12 +1372,13 @@ public class MainActivity extends CommonActivity
 
                 case AppIntent.ACTION_OPEN_BOOK: {
                     long bookId = intent.getLongExtra(AppIntent.EXTRA_BOOK_ID, 0);
-                    DisplayManager.displayBook(getSupportFragmentManager(), bookId, 0);
+                    long noteId = intent.getLongExtra(AppIntent.EXTRA_NOTE_ID, 0);
+                    DisplayManager.displayBook(getSupportFragmentManager(), bookId, noteId);
                     break;
                 }
 
                 case AppIntent.ACTION_OPEN_SETTINGS: {
-                    startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+                    openSettings();
                     break;
                 }
             }

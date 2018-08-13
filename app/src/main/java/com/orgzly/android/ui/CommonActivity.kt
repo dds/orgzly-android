@@ -12,6 +12,7 @@ import android.support.v4.content.LocalBroadcastManager
 import android.support.v4.view.GravityCompat
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.Toolbar
 import android.view.MotionEvent
 import android.view.View
 import com.orgzly.BuildConfig
@@ -36,6 +37,9 @@ abstract class CommonActivity : AppCompatActivity() {
     private var whatsNewDialog: AlertDialog? = null
     private var progressDialog: AlertDialog? = null
 
+    /* Any dialog displayed from activities. */
+    var alertDialog: AlertDialog? = null
+
     /* Actions. */
     private var restartActivity = false
     @JvmField protected var clearFragmentBackstack = false
@@ -58,10 +62,10 @@ abstract class CommonActivity : AppCompatActivity() {
                 }
 
                 AppIntent.ACTION_BOOK_IMPORTED ->
-                    showSimpleSnackbarLong(R.string.notebook_imported)
+                    showSnackbar(R.string.notebook_imported)
 
                 AppIntent.ACTION_DB_CLEARED -> {
-                    showSimpleSnackbarLong(R.string.clear_database_performed)
+                    showSnackbar(R.string.clear_database_performed)
                     clearFragmentBackstack = true
                 }
 
@@ -74,7 +78,7 @@ abstract class CommonActivity : AppCompatActivity() {
                     progressDialog?.dismiss()
 
                 AppIntent.ACTION_SHOW_SNACKBAR ->
-                    showSimpleSnackbarLong(intent.getStringExtra(AppIntent.EXTRA_MESSAGE))
+                    showSnackbar(intent.getStringExtra(AppIntent.EXTRA_MESSAGE))
             }
         }
     }
@@ -107,13 +111,12 @@ abstract class CommonActivity : AppCompatActivity() {
         }
     }
 
-    fun showSimpleSnackbarLong(resId: Int) {
-        showSimpleSnackbarLong(getString(resId))
+    fun showSnackbar(resId: Int) {
+        showSnackbar(getString(resId))
     }
 
-    fun showSimpleSnackbarLong(message: String) {
-        val view = findViewById<View>(R.id.main_content)
-        if (view != null) {
+    fun showSnackbar(message: String) {
+        findViewById<View>(R.id.main_content)?.let { view ->
             showSnackbar(Snackbar.make(view, message, Snackbar.LENGTH_LONG))
         }
     }
@@ -230,16 +233,21 @@ abstract class CommonActivity : AppCompatActivity() {
             it.dismiss()
             progressDialog = null
         }
+
+        alertDialog?.let {
+            it.dismiss()
+            alertDialog = null
+        }
     }
 
     protected fun displayWhatsNewDialog() {
         whatsNewDialog?.dismiss()
 
-        val dialog = WhatsNewDialog.create(this)
-        dialog.setOnDismissListener { _ -> whatsNewDialog = null }
-        dialog.show()
-
-        whatsNewDialog = dialog
+        whatsNewDialog = WhatsNewDialog.create(this)
+        whatsNewDialog?.let {
+            it.setOnDismissListener { _ -> whatsNewDialog = null }
+            it.show()
+        }
     }
 
     override fun onDestroy() {
@@ -275,6 +283,21 @@ abstract class CommonActivity : AppCompatActivity() {
         }
     }
 
+    @JvmOverloads
+    fun setupActionBar(title: Int? = null, homeButton: Boolean = true) {
+        val myToolbar = findViewById<Toolbar>(R.id.toolbar)
+
+        setSupportActionBar(myToolbar)
+
+        if (homeButton) {
+            supportActionBar?.setDisplayHomeAsUpEnabled(true)
+            supportActionBar?.setHomeButtonEnabled(true)
+        }
+
+        if (title != null) {
+            supportActionBar?.setTitle(title)
+        }
+    }
 
     private var runAfterPermissionGrant: Runnable? = null
 
@@ -333,6 +356,7 @@ abstract class CommonActivity : AppCompatActivity() {
                 R.string.pref_key_ignore_system_locale
         )
 
+        @JvmStatic
         fun showSnackbar(context: Context?, msg: String) {
             if (context != null) {
                 val intent = Intent(AppIntent.ACTION_SHOW_SNACKBAR)
