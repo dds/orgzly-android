@@ -32,16 +32,26 @@ Not belirlenmiş bir zaman içerebilir
 SCHEDULED: <2015-02-20 Cuma 15:15>
 
 Zamanlar bir tekrarlayıcı olabilir
-SCHEDULED: <2015-02-16 Pzt. .+1d>
+SCHEDULED: <2015-02-16 Mon .+2d>
 
 Ayrıca zaman sınırı olarak bir tarih ayarlayabilirsiniz
 DEADLINE: <2015-02-20 Cuma>
 
-Not bağlantıları kullanabilir
+** Reminders for scheduled and deadline times are supported
 
-Telefon numarasını tuşlayın (tel:555-2368) ya da [[sms:555-2368][SMS gönderin]].
+They are disabled by default and need to be enabled in Settings.
 
-[[Mailto: support@orgzly.com] [support@orgzly.com] adresine e-posta gönderin, http://www.orgzly.com adresini ziyaret edin veya [[http://www.orgzly.com/help][documentation] adresini ziyaret edin.]].
+** [#A] Note can have a priority
+
+You can change the number of priorities in Settings. You can also change default priority - assumed priority for notes without one set.
+
+** Note can include links
+
+Dial a phone number (tel:555-0199), send SMS (sms:555-0199), compose email (mailto:support@orgzly.com) or visit a webpage ([[http://www.orgzly.com][Orgzly.com]]).
+
+You can also link to another note or notebook within the app.
+
+See http://www.orgzly.com/help#links for more information.
 
 Temel yazı karakteri önemi desteklenmektedir
 

@@ -47,6 +47,7 @@ import com.orgzly.android.ui.Selection;
 import com.orgzly.android.ui.SelectionUtils;
 import com.orgzly.android.ui.dialogs.TimestampDialogFragment;
 import com.orgzly.android.ui.drawer.DrawerItem;
+import com.orgzly.android.ui.util.ActivityUtils;
 import com.orgzly.android.ui.views.GesturedListView;
 import com.orgzly.android.ui.views.TextViewWithMarkup;
 import com.orgzly.android.util.LogUtils;
@@ -379,6 +380,11 @@ public class BookFragment extends NoteListFragment
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, menu, inflater);
 
         inflater.inflate(R.menu.book_actions, menu);
+
+        ActivityUtils.keepScreenOnUpdateMenuItem(
+                getActivity(),
+                menu,
+                menu.findItem(R.id.books_options_keep_screen_on));
     }
 
     @Override
@@ -415,9 +421,9 @@ public class BookFragment extends NoteListFragment
                 listener.onBookPrefaceEditRequest(mBook);
                 return true;
 
-//            case R.id.books_options_menu_item_paste:
-//                mListener.onNotesPasteRequest(mBookId, 0, null);
-//                return true;
+            case R.id.books_options_keep_screen_on:
+                dialog = ActivityUtils.keepScreenOnToggle(getActivity(), item);
+                return true;
 
             default:
                 return super.onOptionsItemSelected(item);

@@ -44,7 +44,7 @@ class Provider : ContentProvider() {
     private val inBatch = ThreadLocal<Boolean>()
 
     private val isInBatch: Boolean
-        get() = inBatch.get() != null && inBatch.get()
+        get() = inBatch.get() != null && inBatch.get() == true
 
     override fun onCreate(): Boolean {
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG)
@@ -457,6 +457,10 @@ class Provider : ContentProvider() {
                 }
             }
 
+            Place.UNDER_AS_FIRST -> {
+                TODO("Insert UNDER_AS_FIRST not implemented")
+            }
+
             Place.BELOW -> {
                 notePos.level = refNotePos!!.level
                 notePos.lft = refNotePos.rgt + 1
@@ -477,7 +481,7 @@ class Provider : ContentProvider() {
         }
 
         when (place) {
-            Place.ABOVE, Place.UNDER, Place.BELOW -> {
+            Place.ABOVE, Place.UNDER, Place.UNDER_AS_FIRST, Place.BELOW -> {
                 /* Make space for new note - increment notes' LFT and RGT. */
                 DatabaseUtils.makeSpaceForNewNotes(db, 1, refNotePos!!, place)
 
@@ -575,11 +579,18 @@ class Provider : ContentProvider() {
         updateOrInsertBookLink(db, bookId, repoUrl, rookUrl)
         updateOrInsertBookSync(db, bookId, repoUrl, rookUrl, rookRevision, rookMtime)
 
-        db.rawQuery(DELETE_CURRENT_VERSIONED_ROOKS_FOR_ROOK_ID, arrayOf(rookId.toString()))
+        // Set book's modification time to remote book's
+        ContentValues().let {
+            it.put(DbBook.MTIME, rookMtime)
+            db.update(DbBook.TABLE, it, DbBook._ID + "=" + bookId, null)
+        }
 
-        val v = ContentValues()
-        v.put(DbCurrentVersionedRook.VERSIONED_ROOK_ID, versionedRookId)
-        db.insert(DbCurrentVersionedRook.TABLE, null, v)
+        db.execSQL(DELETE_CURRENT_VERSIONED_ROOKS_FOR_ROOK_ID, arrayOf(rookId.toString()))
+
+        ContentValues().let {
+            it.put(DbCurrentVersionedRook.VERSIONED_ROOK_ID, versionedRookId)
+            db.insert(DbCurrentVersionedRook.TABLE, null, it)
+        }
 
         return ContentUris.withAppendedId(ProviderContract.Books.ContentUri.books(), bookId)
     }
@@ -697,7 +708,7 @@ class Provider : ContentProvider() {
                 return DbRepo.delete(db, selection, selectionArgs)
             }
 
-        /* Delete repo by just marking it as such. */
+            /* Delete repo by just marking it as such. */
             ProviderUris.REPOS_ID -> {
                 selection = DbRepo._ID + " = " + uri.lastPathSegment
                 selectionArgs = null
@@ -1458,14 +1469,19 @@ class Provider : ContentProvider() {
             LogUtils.d(TAG, bookName + ": Parsing done in " +
                             (System.currentTimeMillis() - startedAt) + " ms")
 
+        val values = ContentValues()
+
         if (repoUrl != null && rookUrl != null && rookRevision != null) {
             updateOrInsertBookLink(db, bookId, repoUrl, rookUrl)
             updateOrInsertBookSync(db, bookId, repoUrl, rookUrl, rookRevision, rookMtime)
+
+            // Set book's modification time to remote book's
+            values.put(DbBook.MTIME, rookMtime)
         }
 
-        /* Mark book as complete. */
-        val values = ContentValues()
+        // Mark book as complete
         values.put(DbBook.IS_DUMMY, 0)
+
         db.update(DbBook.TABLE, values, DbBook._ID + "=" + bookId, null)
 
         return uri

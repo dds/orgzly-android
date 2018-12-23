@@ -536,6 +536,32 @@ public class AppPreferences {
                 context.getResources().getBoolean(R.bool.pref_default_set_last_repeat_on_time_shift));
     }
 
+    public static void setLastRepeatOnTimeShift(Context context, boolean value) {
+        String key = context.getResources().getString(R.string.pref_key_set_last_repeat_on_time_shift);
+        getDefaultSharedPreferences(context).edit().putBoolean(key, value).apply();
+    }
+
+    /*
+     * Allow inlining images
+     */
+    public static boolean imagesEnabled(Context context) {
+        return getDefaultSharedPreferences(context).getBoolean(
+                context.getResources().getString(R.string.pref_key_images_enabled),
+                context.getResources().getBoolean(R.bool.pref_default_images_enabled));
+    }
+
+    public static boolean imagesScaleDownToWidth(Context context) {
+        return getDefaultSharedPreferences(context).getBoolean(
+                context.getResources().getString(R.string.pref_key_images_scale_down_to_width),
+                context.getResources().getBoolean(R.bool.pref_default_images_scale_down_to_width));
+    }
+
+    public static int imagesScaleDownToWidthValue(Context context) {
+        return Integer.valueOf(getDefaultSharedPreferences(context).getString(
+                context.getResources().getString(R.string.pref_key_images_scale_down_to_width_value),
+                context.getResources().getString(R.string.pref_default_images_scale_down_to_width_value)));
+    }
+
     /*
      * Note's metadata visibility
      */
@@ -566,6 +592,16 @@ public class AppPreferences {
         return getDefaultSharedPreferences(context).getStringSet(
                 context.getResources().getString(R.string.pref_key_selected_note_metadata),
                 new HashSet<>(Arrays.asList(context.getResources().getStringArray(R.array.pref_default_selected_note_metadata))));
+    }
+
+    /*
+     * Keep screen on menu item
+     */
+
+    public static boolean keepScreenOnMenuItem(Context context) {
+        return getDefaultSharedPreferences(context).getBoolean(
+                context.getResources().getString(R.string.pref_key_keep_screen_on_menu_item),
+                context.getResources().getBoolean(R.bool.pref_default_keep_screen_on_menu_item));
     }
 
     /*

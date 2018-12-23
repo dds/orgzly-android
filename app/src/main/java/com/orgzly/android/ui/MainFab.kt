@@ -32,11 +32,14 @@ object MainFab {
             val resources = ActivityUtils.FragmentResources(activity, fragmentTag)
 
             if (resources.fabDrawable != null && fabAction != null) {
-                fab.show()
+                // Added for https://issuetracker.google.com/issues/111316656
+                fab.hide()
 
                 fab.setImageDrawable(resources.fabDrawable)
 
                 fab.setOnClickListener { fabAction.run() }
+
+                fab.show()
 
             } else {
                 fab.hide()

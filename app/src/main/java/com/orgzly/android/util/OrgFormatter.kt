@@ -6,37 +6,27 @@ import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.*
-import android.view.View
-import com.orgzly.BuildConfig
 import com.orgzly.android.prefs.AppPreferences
 import com.orgzly.android.ui.views.TextViewWithMarkup
-import com.orgzly.android.ui.views.style.CheckboxSpan
+import com.orgzly.android.ui.views.style.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+
 
 /**
  *
  */
 object OrgFormatter {
-    private const val LINK_SCHEMES = "https?|mailto|tel|voicemail|geo|sms|smsto|mms|mmsto"
 
-    // tel:1234567
-    private const val PLAIN_LINK = "(($LINK_SCHEMES):\\S+)"
+    private const val SYSTEM_LINK_SCHEMES = "https?|mailto|tel|voicemail|geo|sms|smsto|mms|mmsto"
 
-    /* Same as the above, but ] ends the link too. Used for bracket links. */
-    private const val BRACKET_LINK = "(($LINK_SCHEMES):[^]\\s]+)"
+    private const val CUSTOM_LINK_SCHEMES = "id|file"
 
-    // #custom id
-    private const val CUSTOM_ID_LINK = "(#([^]]+))"
+    // Supported link schemas for plain links
+    private const val LINK_SCHEMES = "(?:$SYSTEM_LINK_SCHEMES|$CUSTOM_LINK_SCHEMES)"
 
-    // id:CABA8098-5969-429E-A780-94C8E0A9D206
-    private const val HD = "[0-9a-fA-F]"
-    private const val ID_LINK = "(id:($HD{8}-(?:$HD{4}-){3}$HD{12}))"
-
-    /* Allows anything as a link. Probably needs some constraints.
-     * See http://orgmode.org/manual/External-links.html and org-any-link-re
-     */
-    private const val BRACKET_ANY_LINK = "(([^]]+))"
+    private val LINK_REGEX =
+            """($LINK_SCHEMES:\S+)|(\[\[([^]]+)]\[([^]]+)]])|(\[\[([^]]+)]])""".toRegex()
 
     private const val PRE = "- \t('\"{"
     private const val POST = "- \\t.,:!?;'\")}\\["
@@ -58,14 +48,14 @@ object OrgFormatter {
             Pattern.CASE_INSENSITIVE or Pattern.MULTILINE or Pattern.DOTALL)
 
     private val ANY_DRAWER_PATTERN = drawerPattern("[-a-zA-Z_0-9]+")
-    private val LOGBOOK_DRAWER_PATTERN = drawerPattern(LOGBOOK_DRAWER_NAME)
 
-    private fun namelessBracketLinkPattern(str: String) = Pattern.compile("\\[\\[$str]]")
-    private fun namedBracketLinkPattern(str: String) = Pattern.compile("\\[\\[$str]\\[([^]]+)]]")
+    private val LOGBOOK_DRAWER_PATTERN = drawerPattern(LOGBOOK_DRAWER_NAME)
 
     private val CHECKBOXES_PATTERN = Pattern.compile("""^\s*-\s+(\[[ X]])""", Pattern.MULTILINE)
 
     private const val FLAGS = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+
+    data class Link(val whole: MatchGroup, val link: MatchGroup, val name: MatchGroup)
 
     private data class SpanRegion(
             val start: Int,
@@ -90,11 +80,11 @@ object OrgFormatter {
 
     @JvmStatic
     @JvmOverloads
-    fun parse(str: String, context: Context? = null, linkify: Boolean = true, parseCheckboxes: Boolean = true): SpannableStringBuilder {
+    fun parse(str: CharSequence, context: Context? = null, linkify: Boolean = true, parseCheckboxes: Boolean = true): SpannableStringBuilder {
         return this.parse(str, Config(context, linkify, parseCheckboxes))
     }
 
-    private fun parse(str: String, config: Config): SpannableStringBuilder {
+    private fun parse(str: CharSequence, config: Config): SpannableStringBuilder {
         var ssb = SpannableStringBuilder(str)
 
         /* Must be first, since checkboxes need to know their position in str. */
@@ -102,15 +92,7 @@ object OrgFormatter {
             parseCheckboxes(ssb)
         }
 
-        ssb = parsePropertyLinks(ssb, CUSTOM_ID_LINK, "CUSTOM_ID", config.linkify)
-        ssb = parsePropertyLinks(ssb, ID_LINK, "ID", config.linkify)
-
-        ssb = parseOrgLinksWithName(ssb, BRACKET_LINK, config.linkify)
-        ssb = parseOrgLinksWithName(ssb, BRACKET_ANY_LINK, false)
-
-        ssb = parseOrgLinks(ssb, BRACKET_LINK, config.linkify)
-
-        parsePlainLinks(ssb, PLAIN_LINK, config.linkify)
+        ssb = parseLinks(config, ssb)
 
         ssb = parseMarkup(ssb, config)
 
@@ -119,110 +101,79 @@ object OrgFormatter {
         return ssb
     }
 
-//    private fun logSpans(ssb: SpannableStringBuilder) {
-//        val spans = ssb.getSpans(0, ssb.length - 1, Any::class.java)
-//        LogUtils.d(TAG, "--- Spans ---", spans.size)
-//        spans.forEach {
-//            LogUtils.d(TAG, "Span", it, it.javaClass.simpleName, ssb.getSpanStart(it), ssb.getSpanEnd(it))
-//        }
-//    }
-
-    /**
-     * [[ http://link.com ][ name ]]
-     */
-    private fun parseOrgLinksWithName(ssb: SpannableStringBuilder, linkRegex: String, linkify: Boolean): SpannableStringBuilder {
-        val p = namedBracketLinkPattern(linkRegex)
-        val m = p.matcher(ssb)
-
+    private fun parseLinks(config: Config, ssb: SpannableStringBuilder): SpannableStringBuilder {
         return collectRegions(ssb) { spanRegions ->
-            while (m.find()) {
-                val link = m.group(1)
-                val name = m.group(3)
+            LINK_REGEX.findAll(ssb).forEach { match ->
+                val spans = mutableListOf<Any>()
 
-                val span = if (linkify) URLSpan(link) else null
+                val link = getLinkFromGroups(match.groups)
 
-                spanRegions.add(SpanRegion(m.start(), m.end(), name, listOf(span)))
-            }
-        }
-    }
-
-    /**
-     * [[ http://link.com ]]
-     */
-    private fun parseOrgLinks(ssb: SpannableStringBuilder, linkRegex: String, linkify: Boolean): SpannableStringBuilder {
-        val p = namelessBracketLinkPattern(linkRegex)
-        val m = p.matcher(ssb)
-
-        return collectRegions(ssb) { spanRegions ->
-            while (m.find()) {
-                val link = m.group(1)
-
-                val span = if (linkify) URLSpan(link) else null
-
-                spanRegions.add(SpanRegion(m.start(), m.end(), link, listOf(span)))
-            }
-        }
-    }
-
-    /**
-     * [[ #custom id ]] and [[ #custom id ][ link ]]
-     * [[ id:id ]] and [[ id:id ][ link ]]
-     */
-    private fun parsePropertyLinks(ssb: SpannableStringBuilder, linkRegex: String, propName: String, linkify: Boolean): SpannableStringBuilder {
-        val builder = parsePropertyLinkType(ssb, linkify, propName, namedBracketLinkPattern(linkRegex), 2, 3)
-        return parsePropertyLinkType(builder, linkify, propName, namelessBracketLinkPattern(linkRegex), 2, 1)
-    }
-
-    private fun parsePropertyLinkType(
-            ssb: SpannableStringBuilder,
-            linkify: Boolean,
-            propName: String,
-            pattern: Pattern,
-            propValueGroup: Int,
-            linkGroup: Int): SpannableStringBuilder {
-
-        val m = pattern.matcher(ssb)
-
-        return collectRegions(ssb) { spanRegions ->
-            while (m.find()) {
-                val link = m.group(linkGroup)
-                val propValue = m.group(propValueGroup)
-
-                val span = if (linkify) {
-                    object : ClickableSpan() {
-                        override fun onClick(widget: View) {
-                            if (widget is TextViewWithMarkup) {
-                                widget.openNoteWithProperty(propName, propValue)
-                            }
-                        }
-                    }
-
-                } else {
-                    null
+                getSpanForLink(config, link.link)?.let { span ->
+                    spans.add(span)
                 }
 
-                spanRegions.add(SpanRegion(m.start(), m.end(), link, listOf(span)))
+                // Additional spans could be added here
+
+                val spanRegion = SpanRegion(
+                        link.whole.range.start,
+                        link.whole.range.last + 1,
+                        link.name.value,
+                        spans)
+
+                spanRegions.add(spanRegion)
             }
         }
     }
 
-    /**
-     * http://link.com
-     */
-    private fun parsePlainLinks(ssb: SpannableStringBuilder, linkRegex: String, linkify: Boolean) {
-        if (linkify) {
-            val p = Pattern.compile(linkRegex)
-            val m = p.matcher(ssb)
+    private fun getLinkFromGroups(groups: MatchGroupCollection): Link {
+        return when {
+            groups[1] != null ->
+                // http://link.com
+                Link(whole = groups[1]!!, link = groups[1]!!, name = groups[1]!!)
 
-            while (m.find()) {
-                val link = m.group(1)
+            groups[2] != null ->
+                // [[http://link.com][name]]
+                Link(whole = groups[2]!!, link = groups[3]!!, name = groups[4]!!)
 
-                // Make sure first character has no URLSpan already
-                if (ssb.getSpans(m.start(), m.start() + 1, URLSpan::class.java).isEmpty()) {
-                    ssb.setSpan(URLSpan(link), m.start(), m.end(), FLAGS)
-                }
-            }
+            groups[5] != null ->
+                // [[http://link.com]]
+                Link(whole = groups[5]!!, link = groups[6]!!, name = groups[6]!!)
+
+            else -> throw IllegalStateException()
         }
+    }
+
+    private fun getSpanForLink(config: Config, match: MatchGroup): Any? {
+        if (!config.linkify) {
+            return null
+        }
+
+        val link = match.value
+
+        return when {
+            link.startsWith("file:") ->
+                FileLinkSpan(link.substring(5))
+
+            link.startsWith("id:") ->
+                IdLinkSpan(link.substring(3))
+
+            link.startsWith("#") ->
+                CustomIdLinkSpan(link.substring(1))
+
+            link.matches("^(?:$SYSTEM_LINK_SCHEMES):.+".toRegex()) ->
+                URLSpan(link)
+
+            isFile(link) ->
+                FileLinkSpan(link)
+
+            else ->
+                SearchLinkSpan(link)
+        }
+    }
+
+    // TODO: Check for existence if not too slow
+    private fun isFile(str: String): Boolean {
+        return true
     }
 
     enum class SpanType {

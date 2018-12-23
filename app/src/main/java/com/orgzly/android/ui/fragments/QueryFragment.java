@@ -10,6 +10,7 @@ import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v7.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import com.orgzly.BuildConfig;
 import com.orgzly.R;
@@ -17,6 +18,7 @@ import com.orgzly.android.provider.clients.NotesClient;
 import com.orgzly.android.ui.ActionModeListener;
 import com.orgzly.android.ui.dialogs.TimestampDialogFragment;
 import com.orgzly.android.ui.drawer.DrawerItem;
+import com.orgzly.android.ui.util.ActivityUtils;
 import com.orgzly.android.util.LogUtils;
 
 /**
@@ -140,6 +142,45 @@ abstract public class QueryFragment extends NoteListFragment
 
         mListAdapter.changeCursor(null);
     }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, savedInstanceState);
+        super.onCreate(savedInstanceState);
+
+        setHasOptionsMenu(true);
+    }
+
+    /*
+     * Options menu.
+     */
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, menu, inflater);
+
+        inflater.inflate(R.menu.query_actions, menu);
+
+        ActivityUtils.keepScreenOnUpdateMenuItem(
+                getActivity(),
+                menu,
+                menu.findItem(R.id.query_options_keep_screen_on));
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, item);
+
+        switch (item.getItemId()) {
+            case R.id.query_options_keep_screen_on:
+                dialog = ActivityUtils.keepScreenOnToggle(getActivity(), item);
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
 
     @Override
     abstract public ActionMode.Callback getNewActionMode();

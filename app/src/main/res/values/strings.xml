@@ -180,6 +180,7 @@
     <string name="multiple_repos">Multiple repositories exist</string>
 
     <string name="book_encoding">Notebook\'s encoding</string>
+    <string name="collecting_notebooks_in_progress">Collecting notebooks…</string>
     <string name="syncing_in_progress">Syncing…</string>
     <string name="syncing_book">Syncing %s…</string>
     <string name="sync_with_argument">Sync: %s</string>
@@ -238,6 +239,7 @@
     <string name="permissions_rationale_for_local_repo">Syncing with a local directory requires storage permission</string>
     <string name="permissions_rationale_for_book_export">Exporting notebook requires storage permission</string>
     <string name="permissions_rationale_for_sync_start">Syncing with local repositories requires storage permission</string>
+    <string name="permissions_rationale_for_external_files_access">Accessing external files requires storage permission</string>
 
     <string name="cycle_visibility">Fold/Unfold All</string>
     <string name="running_database_update">Upgrading database…</string>
@@ -423,6 +425,12 @@
     <string name="edit_book_preface">Edit preface</string>
     <string name="book_preface_hint">Text displayed before the first note</string>
 
+    <string name="keep_screen_on_title">Enable option to keep the screen on</string>
+    <string name="keep_screen_on_summary">Display menu item for toggling the option</string>
+
+    <string name="keep_screen_on">Keep screen on</string>
+    <string name="keep_screen_on_desc">Your screen will not turn off until you leave it or disable this option</string>
+
     <string name="layout_direction">Layout direction</string>
     <string name="layout_direction_locale">Default</string>
     <string name="layout_direction_ltr">Left to Right</string>
@@ -466,7 +474,7 @@
     <string name="pref_title_repo_update_sync">Repositories modified (not implemented yet)</string>
     <string name="pref_summary_repo_update_sync">Sync whenever an update in repositories is detected</string>
 
-    <string name="book_never_modified_locally">Never modified locally</string>
+    <string name="not_modified">Not modified</string>
 
     <string name="notes_count_zero">Contains no notes</string>
     <plurals name="notes_count_nonzero">
@@ -534,4 +542,18 @@
     <string name="show_selected">Show selected</string>
     <string name="hide_all">Hide all</string>
 
+    <string name="external_file_no_app_found">No application found to open this file</string>
+    <string name="failed_to_open_linked_file_with_reason">Failed to open file: %s</string>
+
+    <string name="images">Images</string>
+
+    <string name="display_inline_images">Enable images</string>
+    <string name="display_inline_images_summary">Display images in notes</string>
+
+    <string name="scale_down_to_width">Scale down to width</string>
+    <string name="scale_down_to_width_summary">Scale down image to specified width</string>
+
+    <string name="fixed_width_value">Width (in pixels)</string>
+
+    <string name="share_target_service">Share to Orgzly notebook</string>
 </resources>

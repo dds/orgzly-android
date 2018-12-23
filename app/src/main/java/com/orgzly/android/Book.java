@@ -45,7 +45,7 @@ public class Book {
 
     private BookAction lastAction;
 
-    private OrgFileSettings orgFileSettings = new OrgFileSettings();
+    private OrgFileSettings orgFileSettings;
 
     public Book(String name) {
         this(name, "", System.currentTimeMillis(), false);
@@ -56,6 +56,7 @@ public class Book {
         this.preface = preface;
         this.modificationTime = modificationTime;
         this.isDummy = isDummy;
+        this.orgFileSettings = OrgFileSettings.fromPreface(preface);
     }
 
     public void setId(long id) {
@@ -72,6 +73,7 @@ public class Book {
 
     public void setPreface(String preface) {
         this.preface = preface;
+        this.orgFileSettings = OrgFileSettings.fromPreface(preface);
     }
 
     public String getName() {

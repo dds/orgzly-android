@@ -32,28 +32,38 @@ CLOSED: [2018-01-24 Wed 17:00]
 SCHEDULED: <2015-02-20 Fri 15:15>
 
 *** Ismétlődő időt is be lehet állítani
-SCHEDULED: <2015-02-16 Mon .+1d>
+SCHEDULED: <2015-02-16 Mon .+2d>
 
 ** Határidőt is be lehet állítani
 DEADLINE: <2015-02-20 Fri>
 
-** A bejegyzésben kapcsolódás is létrehozható
+** Reminders for scheduled and deadline times are supported
 
-Tárcsázzunk egy számot (tel:555-2368) vagy [[sms:555-2368][küldjünk SMS-t]].
+They are disabled by default and need to be enabled in Settings.
 
-Levél mehet a [[mailto:support@orgzly.com][support@orgzly.com]] címre, látogassuk meg a http://www.orgzly.com oldalt vagy olvassuk el a [[http://www.orgzly.com/help][dokumentációt]].
+** [#A] Note can have a priority
+
+You can change the number of priorities in Settings. You can also change default priority - assumed priority for notes without one set.
+
+** Note can include links
+
+Dial a phone number (tel:555-0199), send SMS (sms:555-0199), compose email (mailto:support@orgzly.com) or visit a webpage ([[http://www.orgzly.com][Orgzly.com]]).
+
+You can also link to another note or notebook within the app.
+
+See http://www.orgzly.com/help#links for more information.
 
 ** Az alapvető tipográfiai kiemeléseket támogatja a program
 
 Lehet egy szó *félkövér*, /dőlt/, _aláhúzva_, =szó szerinti=, ~kód~ és +áthúzva+.
 
-** Checkbox list is available
+** Jelölő négyzetet is használhatunk
 
-- [X] Task 1
-- [ ] Task 2
-- [ ] Task 3
+- [X] Első feladat
+- [ ] Második feladat
+- [ ] Harmadik feladat
 
-Click the checkbox to toggle it. Press new-line button at the end of the line to create a new item.
+Kattintás a jelölőnégyzetre átváltja azt. Új elem létrehozása a sor végén az új-sor gomb megnyomásával a is lehetséges.
 
 * Keresés
 ** Elég sok kereső operátort támogat a program

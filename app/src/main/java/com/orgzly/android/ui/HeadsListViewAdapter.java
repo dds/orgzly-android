@@ -155,6 +155,7 @@ public class HeadsListViewAdapter extends SimpleCursorAdapter {
                 view.setVisibility(View.VISIBLE);
             } else {
                 view.setVisibility(View.GONE);
+                return;
             }
         }
 
@@ -210,6 +211,7 @@ public class HeadsListViewAdapter extends SimpleCursorAdapter {
             }
 
             holder.content.setRawText(head.getContent());
+            ImageLoader.loadImages(holder.content);
 
             /* If content changes (for example by toggling the checkbox), update the note. */
             holder.content.setUserTextChangedListener(() ->

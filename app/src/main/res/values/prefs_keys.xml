@@ -255,6 +255,9 @@
     <string name="pref_key_always_show_set_note_metadata" translatable="false">pref_key_always_show_set_note_metadata</string>
     <bool name="pref_default_always_show_set_note_metadata" translatable="false">true</bool>
 
+    <string name="pref_key_keep_screen_on_menu_item" translatable="false">pref_key_keep_screen_on_menu_item</string>
+    <bool name="pref_default_keep_screen_on_menu_item" translatable="false">false</bool>
+
     <string name="pref_key_selected_note_metadata" translatable="false">pref_key_selected_note_metadata</string>
     <string-array name="note_metadata">
         <item>@string/tags</item>
@@ -353,6 +356,15 @@
 
     <string name="pref_key_set_last_repeat_on_time_shift" translatable="false">pref_key_set_last_repeat_on_time_shift</string>
     <bool name="pref_default_set_last_repeat_on_time_shift" translatable="false">true</bool>
+
+    <string name="pref_key_images_enabled" translatable="false">pref_key_images_enabled</string>
+    <bool name="pref_default_images_enabled" translatable="false">false</bool>
+
+    <string name="pref_key_images_scale_down_to_width" translatable="false">pref_key_images_fixed_width</string>
+    <bool name="pref_default_images_scale_down_to_width" translatable="false">false</bool>
+
+    <string name="pref_key_images_scale_down_to_width_value" translatable="false">pref_key_set_images_fixed_width_value</string>
+    <string name="pref_default_images_scale_down_to_width_value" translatable="false">256</string>
 
     <!-- Separate notes with an empty line -->
     <string name="pref_key_separate_notes_with_new_line" translatable="false">pref_key_separate_notes_with_new_line</string>

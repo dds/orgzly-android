@@ -133,6 +133,7 @@
         <item name="ic_swap_vert_24dp">@drawable/ic_swap_vert_black_24dp</item>
         <item name="ic_sync_18dp">@drawable/ic_sync_black_18dp</item>
         <item name="ic_sync_24dp">@drawable/ic_sync_black_24dp</item>
+        <item name="ic_sync_problem_18dp">@drawable/ic_sync_problem_black_18dp</item>
         <item name="ic_today_18dp">@drawable/ic_today_black_18dp</item>
         <item name="ic_today_24dp">@drawable/ic_today_black_24dp</item>
         <item name="ic_star_border_24dp">@drawable/ic_star_border_black_24dp</item>
@@ -227,7 +228,7 @@
 
         <item name="indent_line_color">#0cffffff</item>
 
-        <item name="snackbar_bg_color">@color/dark_theme_background</item>
+        <item name="snackbar_bg_color">@color/dark_theme_app_bar</item>
 
         <!-- / Color scheme -->
 
@@ -273,6 +274,7 @@
         <item name="ic_swap_vert_24dp">@drawable/ic_swap_vert_white_24dp</item>
         <item name="ic_sync_18dp">@drawable/ic_sync_white_18dp</item>
         <item name="ic_sync_24dp">@drawable/ic_sync_white_24dp</item>
+        <item name="ic_sync_problem_18dp">@drawable/ic_sync_problem_white_18dp</item>
         <item name="ic_today_18dp">@drawable/ic_today_white_18dp</item>
         <item name="ic_today_24dp">@drawable/ic_today_white_24dp</item>
         <item name="ic_star_border_24dp">@drawable/ic_star_border_white_24dp</item>
@@ -486,9 +488,19 @@
     </style>
 
     <style name="HeadItemInfoIcon">
-        <item name="android:layout_width">?attr/item_head_info_icon_size</item>
-        <item name="android:layout_height">?attr/item_head_info_icon_size</item>
-        <!--<item name="android:paddingTop">1dp</item>-->
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:layout_marginBottom">1dp</item>
+    </style>
+
+    <style name="HeadItemInfo">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">?attr/item_head_sub_title_text</item>
+        <item name="android:textColor">?attr/text_secondary_color</item>
+        <item name="android:layout_marginStart">4dp</item>
+        <item name="android:layout_marginLeft">4dp</item>
     </style>
 
     <style name="ListView">

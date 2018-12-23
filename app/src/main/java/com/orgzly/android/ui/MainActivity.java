@@ -31,6 +31,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -1281,6 +1282,12 @@ public class MainActivity extends CommonActivity
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, fragmentTag, title, subTitle, selectionCount);
 
         getSupportActionBar().setTitle(title);
+
+        // Clean up whitespace for multi-line query
+        if (subTitle != null) {
+            subTitle = subTitle.toString().replaceAll("\\s{2,}", " ");
+        }
+
         getSupportActionBar().setSubtitle(subTitle);
 
         drawerNavigationView.updateActiveFragment(fragmentTag);

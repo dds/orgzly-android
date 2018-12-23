@@ -8,15 +8,15 @@ android {
         javaMaxHeapSize "2g"
     }
 
-    compileSdkVersion 27
-    buildToolsVersion '27.0.3'
+    compileSdkVersion 28
+    buildToolsVersion '28.0.3'
 
     defaultConfig {
         minSdkVersion 16 // Jelly Bean (4.1)
-        targetSdkVersion 27 // Oreo (8.1)
+        targetSdkVersion 28 // Android Pie (9)
         applicationId "com.orgzly"
-        versionCode 112
-        versionName "1.6.9"
+        versionCode 117
+        versionName "1.6.12"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
         multiDexEnabled true
@@ -118,7 +118,10 @@ dependencies {
     implementation "com.evernote:android-job:$evernote_android_job_version"
 
     implementation "joda-time:joda-time:$joda_time_version"
+
     implementation "org.eclipse.jgit:org.eclipse.jgit:$jgit_version"
+
+    implementation "com.github.bumptech.glide:glide:$glide_version"
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "org.jetbrains:annotations:$jetbrains_annotations"

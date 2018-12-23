@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.preference.Preference
 import android.preference.PreferenceManager
 import android.preference.PreferenceScreen
@@ -20,8 +21,10 @@ import com.orgzly.android.Notifications
 import com.orgzly.android.Shelf
 import com.orgzly.android.prefs.AppPreferences
 import com.orgzly.android.prefs.ListPreferenceWithValueAsSummary
+import com.orgzly.android.ui.CommonActivity
 import com.orgzly.android.ui.NoteStates
 import com.orgzly.android.ui.util.ActivityUtils
+import com.orgzly.android.util.AppPermissions
 import com.orgzly.android.util.LogUtils
 import com.orgzly.android.widgets.ListWidgetProvider
 import java.util.*
@@ -163,68 +166,70 @@ class SettingsFragment : PreferenceFragment(), SharedPreferences.OnSharedPrefere
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, sharedPreferences, key)
 
-        val activity = activity ?: return
+        val activity = activity as? CommonActivity ?: return
 
-        /* State keywords. */
-        if (getString(R.string.pref_key_states) == key) {
-            AppPreferences.updateStaticKeywords(context)
-
-            /* Re-parse notes. */
-            ActivityUtils.closeSoftKeyboard(activity)
-            mListener?.onNotesUpdateRequest(AppIntent.ACTION_REPARSE_NOTES)
-
-            setDefaultStateForNewNote()
-        }
-
-        if (getString(R.string.pref_key_is_created_at_added) == key || getString(R.string.pref_key_created_at_property) == key) {
-            if (AppPreferences.createdAt(context)) {
-                mListener?.onNotesUpdateRequest(AppIntent.ACTION_SYNC_CREATED_AT_WITH_PROPERTY)
-            }
-        }
-
-        /* Cancel or create an new-note ongoing notification. */
-        if (getString(R.string.pref_key_new_note_notification) == key) {
-            if (AppPreferences.newNoteNotification(context)) {
-                Notifications.createNewNoteNotification(context)
-            } else {
-                Notifications.cancelNewNoteNotification(context)
-            }
-        }
-
-        /* Update default priority when minimum priority changes. */
-        if (getString(R.string.pref_key_min_priority) == key) {
-            findPreference(getString(R.string.pref_key_default_priority))?.let {
-                val pref = it as ListPreferenceWithValueAsSummary
-
-                val defPri = AppPreferences.defaultPriority(context)
-                val minPri = sharedPreferences.getString(key, null)
-
-                // Default priority is lower then minimum
-                if (defPri.compareTo(minPri, ignoreCase = true) > 0) { // minPri -> defPri
-                    /* Must use preference directly to update the view too. */
-                    pref.value = minPri
-                }
-            }
-        }
-
-        /* Update minimum priority when default priority changes. */
-        if (getString(R.string.pref_key_default_priority) == key) {
-            findPreference(getString(R.string.pref_key_min_priority))?.let {
-                val pref = it as ListPreferenceWithValueAsSummary
-
-                val minPri = AppPreferences.minPriority(context)
-                val defPri = sharedPreferences.getString(key, null)
-
-                // Default priority is lower then minimum
-                if (minPri.compareTo(defPri, ignoreCase = true) < 0) { // minPri -> defPri
-                    /* Must use preference directly to update the view too. */
-                    pref.value = defPri
-                }
-            }
-        }
-
-        /* Update widget for changed style. */
         when (key) {
+            // State keywords
+            getString(R.string.pref_key_states) -> {
+                AppPreferences.updateStaticKeywords(context)
+
+                /* Re-parse notes. */
+                ActivityUtils.closeSoftKeyboard(activity)
+                mListener?.onNotesUpdateRequest(AppIntent.ACTION_REPARSE_NOTES)
+
+                setDefaultStateForNewNote()
+            }
+
+            // Created-at property
+            getString(R.string.pref_key_is_created_at_added),
+            getString(R.string.pref_key_created_at_property) -> {
+                if (AppPreferences.createdAt(context)) {
+                    mListener?.onNotesUpdateRequest(AppIntent.ACTION_SYNC_CREATED_AT_WITH_PROPERTY)
+                }
+            }
+
+            // Cancel or create an new-note ongoing notification
+            getString(R.string.pref_key_new_note_notification) -> {
+                if (AppPreferences.newNoteNotification(context)) {
+                    Notifications.createNewNoteNotification(context)
+                } else {
+                    Notifications.cancelNewNoteNotification(context)
+                }
+            }
+
+            // Update default priority when minimum priority changes
+            getString(R.string.pref_key_min_priority) -> {
+                findPreference(getString(R.string.pref_key_default_priority))?.let {
+                    val pref = it as ListPreferenceWithValueAsSummary
+
+                    val defPri = AppPreferences.defaultPriority(context)
+                    val minPri = sharedPreferences.getString(key, null)
+
+                    // Default priority is lower then minimum
+                    if (defPri.compareTo(minPri, ignoreCase = true) > 0) { // minPri -> defPri
+                        /* Must use preference directly to update the view too. */
+                        pref.value = minPri
+                    }
+                }
+            }
+
+            // Update minimum priority when default priority changes
+            getString(R.string.pref_key_default_priority) -> {
+                findPreference(getString(R.string.pref_key_min_priority))?.let {
+                    val pref = it as ListPreferenceWithValueAsSummary
+
+                    val minPri = AppPreferences.minPriority(context)
+                    val defPri = sharedPreferences.getString(key, null)
+
+                    // Default priority is lower then minimum
+                    if (minPri.compareTo(defPri, ignoreCase = true) < 0) { // minPri -> defPri
+                        /* Must use preference directly to update the view too. */
+                        pref.value = defPri
+                    }
+                }
+            }
+
+            // Update widget for changed style
             getString(R.string.pref_key_widget_color_scheme),
             getString(R.string.pref_key_widget_font_size),
             getString(R.string.pref_key_widget_opacity),
@@ -233,16 +238,24 @@ class SettingsFragment : PreferenceFragment(), SharedPreferences.OnSharedPrefere
                 intent.action = AppIntent.ACTION_UPDATE_LAYOUT_LIST_WIDGET
                 context?.sendBroadcast(intent)
             }
-        }
 
-        /* Reminders for scheduled notes. Reset last run time. */
-        if (getString(R.string.pref_key_use_reminders_for_scheduled_times) == key) {
-            AppPreferences.reminderLastRunForScheduled(context, 0L)
-        }
+            // Reminders for scheduled notes - reset last run time
+            getString(R.string.pref_key_use_reminders_for_scheduled_times) ->
+                AppPreferences.reminderLastRunForScheduled(context, 0L)
 
-        /* Reminders for deadlines. Reset last run time. */
-        if (getString(R.string.pref_key_use_reminders_for_deadline_times) == key) {
-            AppPreferences.reminderLastRunForDeadline(context, 0L)
+            // Reminders for deadlines - reset last run time
+            getString(R.string.pref_key_use_reminders_for_deadline_times) ->
+                AppPreferences.reminderLastRunForDeadline(context, 0L)
+
+            // Display images inline enabled - request permission
+            getString(R.string.pref_key_images_enabled) -> {
+                if (AppPreferences.imagesEnabled(context)) {
+                    Handler().post {
+                        AppPermissions.isGrantedOrRequest(
+                                activity, AppPermissions.Usage.EXTERNAL_FILES_ACCESS)
+                    }
+                }
+            }
         }
 
         updateRemindersScreen()
@@ -262,7 +275,7 @@ class SettingsFragment : PreferenceFragment(), SharedPreferences.OnSharedPrefere
 
         if (scheduled != null && deadline != null) {
             val remindersEnabled = (scheduled as TwoStatePreference).isChecked
-                                   || (deadline as TwoStatePreference).isChecked
+                    || (deadline as TwoStatePreference).isChecked
 
             /* These do not exist on Oreo and later */
             findPreference(getString(R.string.pref_key_reminders_sound))?.isEnabled = remindersEnabled
