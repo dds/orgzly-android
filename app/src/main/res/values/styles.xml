@@ -35,7 +35,8 @@
         <item name="item_head_sub_title_content_text">14sp</item>
 
         <item name="item_repo_text_size">14sp</item>
-        <item name="fragment_note_time_buttons_text_size">14sp</item>
+
+        <item name="fragment_note_content_text_size">16sp</item>
 
         <!-- Icon sizes -->
         <item name="item_book_info_icon_size">14dp</item>
@@ -60,6 +61,8 @@
         <item name="android:statusBarColor" tools:targetApi="21">#e6757575</item>
 
         <item name="app_bar_bg_color">@color/grey_300</item>
+
+        <item name="bottom_action_bar_bg_color">@color/light_theme_background</item>
 
         <!-- Make buttons lighter. -->
         <item name="android:colorButtonNormal" tools:targetApi="21">@color/grey_100</item>
@@ -99,7 +102,8 @@
         <item name="ic_arrow_back_24dp">@drawable/ic_arrow_back_black_24dp</item>
         <item name="ic_arrow_downward_24dp">@drawable/ic_arrow_downward_black_24dp</item>
         <item name="ic_arrow_forward_24dp">@drawable/ic_arrow_forward_black_24dp</item>
-        <item name="ic_arrow_upward_black_24dp">@drawable/ic_arrow_upward_black_24dp</item>
+        <item name="ic_arrow_upward_24dp">@drawable/ic_arrow_upward_black_24dp</item>
+        <item name="ic_cancel_24dp">@drawable/ic_cancel_black_24dp</item>
         <item name="ic_center_focus_strong_24dp">@drawable/ic_center_focus_strong_black_24dp</item>
         <item name="ic_close_24dp">@drawable/ic_close_black_24dp</item>
         <item name="ic_content_cut_24dp">@drawable/ic_content_cut_black_24dp</item>
@@ -109,6 +113,8 @@
         <item name="ic_done_24dp">@drawable/ic_done_black_24dp</item>
         <item name="ic_edit_24dp">@drawable/ic_edit_black_24dp</item>
         <item name="ic_event_24dp">@drawable/ic_event_black_24dp</item>
+        <item name="ic_file_download_24dp">@drawable/ic_file_download_black_24dp</item>
+        <item name="ic_file_upload_24dp">@drawable/ic_file_upload_black_24dp</item>
         <item name="ic_flag_24dp">@drawable/ic_flag_black_24dp</item>
         <item name="ic_folder_open_18dp">@drawable/ic_folder_open_black_18dp</item>
         <item name="ic_folder_open_24dp">@drawable/ic_folder_open_black_24dp</item>
@@ -117,6 +123,7 @@
         <item name="ic_info_outline_18dp">@drawable/ic_info_outline_black_18dp</item>
         <item name="ic_info_outline_24dp">@drawable/ic_info_outline_black_24dp</item>
         <item name="ic_insert_drive_file_24dp">@drawable/ic_insert_drive_file_black_24dp</item>
+        <item name="ic_keyboard_arrow_down_24dp">@drawable/ic_keyboard_arrow_down_black_24dp</item>
         <item name="ic_keyboard_arrow_up_24dp">@drawable/ic_keyboard_arrow_up_black_24dp</item>
         <item name="ic_label_outline_24dp">@drawable/ic_label_outline_black_24dp</item>
         <item name="ic_language_18dp">@drawable/ic_language_black_18dp</item>
@@ -124,10 +131,13 @@
         <item name="ic_link_18dp">@drawable/ic_link_black_18dp</item>
         <item name="ic_notifications_none_24dp">@drawable/ic_notifications_none_black_24dp</item>
         <item name="ic_open_in_browser_24dp">@drawable/ic_open_in_browser_black_24dp</item>
+        <item name="ic_open_in_new_24dp">@drawable/ic_open_in_new_black_24dp</item>
+        <item name="ic_remove_red_eye_24dp">@drawable/ic_remove_red_eye_black_24dp</item>
         <item name="ic_repeat_24dp">@drawable/ic_repeat_black_24dp</item>
         <item name="ic_rotate_left_24dp">@drawable/ic_rotate_left_black_24dp</item>
         <item name="ic_rotate_right_24dp">@drawable/ic_rotate_right_black_24dp</item>
         <item name="ic_search_24dp">@drawable/ic_search_black_24dp</item>
+        <item name="ic_send_24dp">@drawable/ic_send_black_24dp</item>
         <item name="ic_settings_24dp">@drawable/ic_settings_black_24dp</item>
         <item name="ic_storage_24dp">@drawable/ic_storage_black_24dp</item>
         <item name="ic_swap_vert_24dp">@drawable/ic_swap_vert_black_24dp</item>
@@ -181,7 +191,8 @@
         <item name="item_head_sub_title_content_text">14sp</item>
 
         <item name="item_repo_text_size">14sp</item>
-        <item name="fragment_note_time_buttons_text_size">14sp</item>
+
+        <item name="fragment_note_content_text_size">16sp</item>
 
         <!-- Icon sizes -->
         <item name="item_book_info_icon_size">14dp</item>
@@ -205,6 +216,8 @@
         <item name="android:statusBarColor" tools:targetApi="21">#e6000000</item>
 
         <item name="app_bar_bg_color">@color/dark_theme_app_bar</item>
+
+        <item name="bottom_action_bar_bg_color">@color/dark_theme_background</item>
 
         <item name="item_bg">@drawable/item_selector_dark</item>
 
@@ -240,7 +253,8 @@
         <item name="ic_arrow_back_24dp">@drawable/ic_arrow_back_white_24dp</item>
         <item name="ic_arrow_downward_24dp">@drawable/ic_arrow_downward_white_24dp</item>
         <item name="ic_arrow_forward_24dp">@drawable/ic_arrow_forward_white_24dp</item>
-        <item name="ic_arrow_upward_black_24dp">@drawable/ic_arrow_upward_white_24dp</item>
+        <item name="ic_arrow_upward_24dp">@drawable/ic_arrow_upward_white_24dp</item>
+        <item name="ic_cancel_24dp">@drawable/ic_cancel_white_24dp</item>
         <item name="ic_center_focus_strong_24dp">@drawable/ic_center_focus_strong_white_24dp</item>
         <item name="ic_close_24dp">@drawable/ic_close_white_24dp</item>
         <item name="ic_content_cut_24dp">@drawable/ic_content_cut_white_24dp</item>
@@ -250,6 +264,8 @@
         <item name="ic_done_24dp">@drawable/ic_done_white_24dp</item>
         <item name="ic_edit_24dp">@drawable/ic_edit_white_24dp</item>
         <item name="ic_event_24dp">@drawable/ic_event_white_24dp</item>
+        <item name="ic_file_download_24dp">@drawable/ic_file_download_white_24dp</item>
+        <item name="ic_file_upload_24dp">@drawable/ic_file_upload_white_24dp</item>
         <item name="ic_flag_24dp">@drawable/ic_flag_white_24dp</item>
         <item name="ic_folder_open_18dp">@drawable/ic_folder_open_white_18dp</item>
         <item name="ic_folder_open_24dp">@drawable/ic_folder_open_white_24dp</item>
@@ -258,6 +274,7 @@
         <item name="ic_info_outline_18dp">@drawable/ic_info_outline_white_18dp</item>
         <item name="ic_info_outline_24dp">@drawable/ic_info_outline_white_24dp</item>
         <item name="ic_insert_drive_file_24dp">@drawable/ic_insert_drive_file_white_24dp</item>
+        <item name="ic_keyboard_arrow_down_24dp">@drawable/ic_keyboard_arrow_down_white_24dp</item>
         <item name="ic_keyboard_arrow_up_24dp">@drawable/ic_keyboard_arrow_up_white_24dp</item>
         <item name="ic_label_outline_24dp">@drawable/ic_label_outline_white_24dp</item>
         <item name="ic_language_18dp">@drawable/ic_language_white_18dp</item>
@@ -265,10 +282,13 @@
         <item name="ic_link_18dp">@drawable/ic_link_white_18dp</item>
         <item name="ic_notifications_none_24dp">@drawable/ic_notifications_none_white_24dp</item>
         <item name="ic_open_in_browser_24dp">@drawable/ic_open_in_browser_white_24dp</item>
+        <item name="ic_open_in_new_24dp">@drawable/ic_open_in_new_white_24dp</item>
+        <item name="ic_remove_red_eye_24dp">@drawable/ic_remove_red_eye_white_24dp</item>
         <item name="ic_repeat_24dp">@drawable/ic_repeat_white_24dp</item>
         <item name="ic_rotate_left_24dp">@drawable/ic_rotate_left_white_24dp</item>
         <item name="ic_rotate_right_24dp">@drawable/ic_rotate_right_white_24dp</item>
         <item name="ic_search_24dp">@drawable/ic_search_white_24dp</item>
+        <item name="ic_send_24dp">@drawable/ic_send_white_24dp</item>
         <item name="ic_settings_24dp">@drawable/ic_settings_white_24dp</item>
         <item name="ic_storage_24dp">@drawable/ic_storage_white_24dp</item>
         <item name="ic_swap_vert_24dp">@drawable/ic_swap_vert_white_24dp</item>
@@ -319,6 +339,8 @@
 
         <item name="app_bar_bg_color">@color/dark_theme_status_bar</item>
 
+        <item name="bottom_action_bar_bg_color">@color/dark_theme_status_bar</item>
+
         <item name="item_bg">@drawable/item_selector_black</item>
 
         <item name="item_selected_bg_color">@color/black_theme_item_selected_bg_color</item>
@@ -358,7 +380,8 @@
         <item name="item_head_sub_title_content_text">12sp</item>
 
         <item name="item_repo_text_size">14sp</item>
-        <item name="fragment_note_time_buttons_text_size">14sp</item>
+
+        <item name="fragment_note_content_text_size">16sp</item>
 
         <!-- Icon sizes -->
         <item name="item_book_info_icon_size">14dp</item>
@@ -387,7 +410,7 @@
 
         <item name="item_repo_text_size">20sp</item>
 
-        <item name="fragment_note_time_buttons_text_size">18sp</item>
+        <item name="fragment_note_content_text_size">18sp</item>
 
         <item name="android:textSize">20sp</item>
 
@@ -459,10 +482,21 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginLeft">@dimen/screen_edge</item>
-        <item name="android:layout_marginRight">@dimen/screen_edge</item>
         <item name="android:minHeight">48dp</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="NoteFragmentMetadataHeader" parent="Base.Widget.AppCompat.Button.Borderless">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:padding">0dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
     </style>
 
     <style name="NoteFragmentListItemSpinnerButton" parent="Widget.AppCompat.Spinner.Underlined">
@@ -484,7 +518,6 @@
         <item name="android:layout_marginStart" tools:targetApi="17">2dp</item>
         <item name="android:layout_marginRight">8dp</item>
         <item name="android:layout_marginEnd" tools:targetApi="17">8dp</item>
-
     </style>
 
     <style name="HeadItemInfoIcon">
@@ -503,16 +536,23 @@
         <item name="android:layout_marginLeft">4dp</item>
     </style>
 
-    <style name="ListView">
-        <item name="android:clipToPadding">false</item>
-        <item name="android:choiceMode">multipleChoice</item>
-        <item name="android:fadeScrollbars">false</item>
-        <item name="android:fastScrollEnabled">true</item>
-        <item name="android:scrollbarStyle">outsideOverlay</item>
-        <item name="android:paddingTop">0dp</item>
-        <item name="android:paddingBottom">0dp</item>
+    <style name="RecyclerViewNoteList">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
         <item name="android:paddingLeft">0dp</item>
         <item name="android:paddingRight">0dp</item>
+
+        <!-- Crash on API 16 - what's the minimum version? -->
+        <!--
+        <item name="fastScrollEnabled">true</item>
+        <item name="fastScrollHorizontalThumbDrawable">@drawable/thumb_drawable</item>
+        <item name="fastScrollHorizontalTrackDrawable">@drawable/line_drawable</item>
+        <item name="fastScrollVerticalThumbDrawable">@drawable/thumb_drawable</item>
+        <item name="fastScrollVerticalTrackDrawable">@drawable/line_drawable</item>
+        -->
     </style>
 
     <style name="ListViewItem">
@@ -536,9 +576,20 @@
         <item name="android:textSize">?attr/font_large</item>
     </style>
 
-    <style name="ItemQuickMenuButton" parent="android:style/Widget.Holo.Button.Borderless">
+    <style name="LoadingProgressBar">
+        <item name="android:indeterminate">true</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_gravity">top|center_horizontal</item>
+        <item name="android:paddingTop">@dimen/list_view_with_fab_bottom_padding</item>
+    </style>
+
+    <style name="BottomActionBarButton" parent="android:style/Widget.Holo.Button.Borderless">
+        <!--<item name="android:layout_width">wrap_content</item>-->
+
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_weight">1</item>
+
         <item name="android:layout_height">wrap_content</item>
     </style>
 
@@ -558,27 +609,30 @@
         <!--<item name="android:layout_marginLeft">8dp</item>-->
     </style>
 
-
-    <style name="QueryListView" parent="ListView">
-        <item name="android:id">@android:id/list</item>
-
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">match_parent</item>
-
-        <!--<item name="android:divider">@null</item>-->
-        <!--<item name="android:dividerHeight">0dp</item>-->
-
-        <item name="android:paddingTop">4dp</item>
-        <item name="android:paddingBottom">4dp</item>
-
-        <item name="menu_container">@+id/item_head_menu_container</item>
-        <item name="menu_for_fling_right">0</item>
-        <item name="menu_for_fling_left">2</item>
-    </style>
-
     <style name="NavigationViewForDrawer">
         <item name="android:listDivider">@null</item>
         <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="BottomActionBar">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">?attr/actionBarSize</item>
+
+        <!--<item name="android:visibility">invisible</item>-->
+        <!--<item name="android:translationY">?attr/actionBarSize</item>-->
+        <!--<item name="android:alpha">0.0</item>-->
+
+        <item name="android:layout_gravity">bottom</item>
+        <item name="android:background">?attr/bottom_action_bar_bg_color</item>
+        <item name="android:elevation" tools:targetApi="lollipop">4dp</item>
+        <item name="android:theme">@style/ThemeOverlay.AppCompat.ActionBar</item>
+        <item name="android:popupTheme" tools:targetApi="lollipop">@style/ThemeOverlay.AppCompat.ActionBar</item>
+
+        <!--<item name="android:contentInsetLeft" tools:targetApi="lollipop">0dp</item>-->
+        <!--<item name="android:contentInsetStart" tools:targetApi="lollipop">0dp</item>-->
+        <!--<item name="android:contentInsetRight" tools:targetApi="lollipop">0dp</item>-->
+        <!--<item name="android:contentInsetEnd" tools:targetApi="lollipop">0dp</item>-->
+
     </style>
 
 </resources>

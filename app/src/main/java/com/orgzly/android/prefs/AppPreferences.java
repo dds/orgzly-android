@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static android.preference.PreferenceManager.getDefaultSharedPreferences;
+import static androidx.preference.PreferenceManager.getDefaultSharedPreferences;
 
 
 /**
@@ -363,21 +363,6 @@ public class AppPreferences {
     }
 
     /*
-     * Click action.
-     */
-
-    public static boolean isReverseNoteClickAction(Context context) {
-        return getDefaultSharedPreferences(context).getBoolean(
-                context.getResources().getString(R.string.pref_key_is_reverse_click_action),
-                context.getResources().getBoolean(R.bool.pref_default_is_reverse_click_action));
-    }
-
-    public static void isReverseNoteClickAction(Context context, boolean value) {
-        String key = context.getResources().getString(R.string.pref_key_is_reverse_click_action);
-        getDefaultSharedPreferences(context).edit().putBoolean(key, value).apply();
-    }
-
-    /*
      * Schedule new note.
      */
 
@@ -565,6 +550,17 @@ public class AppPreferences {
     /*
      * Note's metadata visibility
      */
+
+    public static boolean noteMetadataFolded(Context context) {
+        return getDefaultSharedPreferences(context).getBoolean(
+                context.getResources().getString(R.string.pref_key_note_metadata_folded),
+                context.getResources().getBoolean(R.bool.pref_default_note_metadata_folded));
+    }
+
+    public static void noteMetadataFolded(Context context, boolean value) {
+        String key = context.getResources().getString(R.string.pref_key_note_metadata_folded);
+        getDefaultSharedPreferences(context).edit().putBoolean(key, value).apply();
+    }
 
     public static String noteMetadataVisibility(Context context) {
         return getDefaultSharedPreferences(context).getString(

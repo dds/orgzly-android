@@ -6,23 +6,20 @@ import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Handler
+import android.util.DisplayMetrics
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
-import android.view.WindowManager
+import android.view.*
 import android.view.inputmethod.InputMethodManager
+import android.widget.ScrollView
+import androidx.appcompat.view.menu.ActionMenuItemView
+import androidx.appcompat.widget.Toolbar
 import com.orgzly.BuildConfig
 import com.orgzly.R
 import com.orgzly.android.AppIntent
 import com.orgzly.android.prefs.AppPreferences
-import com.orgzly.android.ui.MainActivity
-import com.orgzly.android.ui.fragments.BookFragment
-import com.orgzly.android.ui.fragments.BooksFragment
-import com.orgzly.android.ui.fragments.FiltersFragment
+import com.orgzly.android.ui.main.MainActivity
 import com.orgzly.android.util.LogUtils
 
 object ActivityUtils {
@@ -42,15 +39,21 @@ object ActivityUtils {
     }
 
     @JvmStatic
-    fun openSoftKeyboard(activity: Activity?, view: View) {
+    @JvmOverloads
+    fun openSoftKeyboard(activity: Activity?, view: View, scrollView: ScrollView? = null) {
+        openSoftKeyboardWithDelay(activity, view, 0, scrollView)
+    }
+
+    // TODO: Remove, open immediately when ready
+    @JvmStatic
+    @JvmOverloads
+    fun openSoftKeyboardWithDelay(activity: Activity?, view: View, delay: Long = 200, scrollView: ScrollView? = null) {
         if (activity != null) {
             if (view.requestFocus()) {
-                if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Showing keyboard for view $view in activity $activity")
+                if (BuildConfig.LOG_DEBUG)
+                    LogUtils.d(TAG, "Showing keyboard for view $view in activity $activity")
 
-                Handler().postDelayed({
-                    val imm = activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
-                }, 200)
+                doOpenSoftKeyboard(activity, view, delay, scrollView)
 
             } else {
                 Log.w(TAG, "Can't open keyboard because view " + view +
@@ -59,20 +62,27 @@ object ActivityUtils {
         }
     }
 
-    class FragmentResources(context: Context, fragmentTag: String) {
-        val fabDrawable: Drawable?
-
-        init {
-            val fabAttr = when (fragmentTag) {
-                FiltersFragment.FRAGMENT_TAG -> R.attr.ic_add_24dp
-                BooksFragment.FRAGMENT_TAG   -> R.attr.ic_add_24dp
-                BookFragment.FRAGMENT_TAG    -> R.attr.ic_add_24dp
-                else -> 0
+    private fun doOpenSoftKeyboard(activity: Activity, view: View, delay: Long, scrollView: ScrollView?) {
+        val listener = if (scrollView != null) {
+            // Keep scrolling the view as the keyboard opens
+            ViewTreeObserver.OnGlobalLayoutListener {
+                scrollView.scrollTo(0, view.top)
             }
+        } else {
+            null
+        }
 
-            val typedArray = context.obtainStyledAttributes(intArrayOf(fabAttr))
-            fabDrawable = typedArray.getDrawable(0)
-            typedArray.recycle()
+        scrollView?.viewTreeObserver?.addOnGlobalLayoutListener(listener)
+
+        Handler().postDelayed({
+            val imm = activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
+        }, delay)
+
+        if (scrollView != null) {
+            Handler().postDelayed({
+                scrollView.viewTreeObserver?.removeOnGlobalLayoutListener(listener)
+            }, delay + 500)
         }
     }
 
@@ -147,5 +157,35 @@ object ActivityUtils {
     @JvmStatic
     fun keepScreenOnClear(activity: Activity?) {
         activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    fun distributeToolbarItems(activity: Activity?, toolbar: Toolbar) {
+        if (activity != null) {
+            val display = activity.windowManager.defaultDisplay
+
+            val metrics = DisplayMetrics().also {
+                display.getMetrics(it)
+            }
+
+            val screenWidth = metrics.widthPixels
+
+            for (i in 0 until toolbar.childCount) {
+                val childView = toolbar.getChildAt(i)
+
+                if (childView is ViewGroup) {
+                    val innerChildCount = childView.childCount
+
+                    val itemWidth = screenWidth / innerChildCount
+
+                    for (j in 0 until innerChildCount) {
+                        val grandChild = childView.getChildAt(j)
+
+                        if (grandChild is ActionMenuItemView) {
+                            grandChild.layoutParams.width = itemWidth
+                        }
+                    }
+                }
+            }
+        }
     }
 }
